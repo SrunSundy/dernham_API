@@ -1,6 +1,15 @@
-<IfModule authz_core_module>
-    Require all denied
-</IfModule>
-<IfModule !authz_core_module>
-    Deny from all
-</IfModule>
+# index file can be index.php, home.php, default.php etc.
+DirectoryIndex index.php
+
+# Rewrite engine
+RewriteEngine On
+
+# condition with escaping special chars
+RewriteCond $1 !^(index\.php|robots\.txt|favicon\.ico)
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ ./index.php/$1 [L,QSA]
+php_value upload_max_filesize 128M  
+php_value post_max_size 128M  
+php_value max_input_time 3600  
+php_value max_execution_time 3600
