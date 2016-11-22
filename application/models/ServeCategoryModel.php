@@ -14,6 +14,22 @@ class ServeCategoryModel extends CI_Model{
 				WHERE serve_category_status = 1
 				ORDER BY serve_category_type DESC";
 		$query = $this->db->query($sql);
+
+		$response = $query->result();		
+		return $response;
+		
+	}
+	
+	function getServeCategoryByShopid( $shop_id ){
+		
+		$sql = "SELECT 
+					cate.serve_category_name
+				FROM nham_serve_cate_map_shop serve
+				LEFT JOIN nham_serve_category cate ON cate.serve_category_id = serve.serve_category_id
+				WHERE cate.serve_category_status = 1
+				AND serve.shop_id = ?";
+		$query = $this->db->query($sql, $shop_id);
+		
 		$response = $query->result();
 		return $response;
 		
