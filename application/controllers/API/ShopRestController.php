@@ -143,7 +143,9 @@ class ShopRestController extends REST_Controller{
 			$subzerotime = substractTime($item->shop_opening_time, "00:00:00");
 			$time_to_open = addTime($subfulltime , $subzerotime); // already return as milisecond
 		}
+		$this->load->model('ProductModel');
 		
+		$item->product_average_price = $this->ProductModel->getProAveragePriceByShopid($shop_id)->average_price;
 		$item->is_shop_open = $is_open;
 		$item->time_to_close = $time_to_close;
 		$item->time_to_open = $time_to_open;
@@ -156,6 +158,8 @@ class ShopRestController extends REST_Controller{
 		
 		$this->load->model('ShopImageModel');
 		$item->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($shop_id, 6);
+			
+		$item->shop_popular_product = $this->ProductModel->getPopularProByShopid($shop_id, 6);
 		
 		$item->shop_branch = [];
 		if($item->branch_id != null && $item->branch_id != "" && $item->branch_id > 0 ){
