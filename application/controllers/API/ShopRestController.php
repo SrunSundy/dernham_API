@@ -36,6 +36,13 @@ class ShopRestController extends REST_Controller{
 		
 		header('Access-Control-Allow-Origin:*');
 		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["response_msg"] = "bad request";
+			$this->response($response);
+			return;
+		}
 		$request = $request["request_data"];
 		
 		if(!isset($request["row"])) $request["row"] = 10;
@@ -104,8 +111,16 @@ class ShopRestController extends REST_Controller{
 		$response = array();
 		header('Access-Control-Allow-Origin:*');
 		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["response_msg"] = "bad request";
+			$this->response($response);
+			return;
+		}
+		
 		$request = $request["request_data"];
-						
+
 		$this->load->helper('validate');
 		$this->load->helper('timecalculator');
 		

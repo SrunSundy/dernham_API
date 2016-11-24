@@ -18,7 +18,7 @@ class ShopImageRestController extends REST_Controller{
 		$this->load->view('index');
 	}
 	
-	public function getshopimage_get( $shop_image_id ){
+	public function getshopimage_get( $shop_image_id = null ){
 		
 		header('Access-Control-Allow-Origin:*');
 		$response_data = $this->ShopImageModel->getShopDetailImg($shop_image_id);
