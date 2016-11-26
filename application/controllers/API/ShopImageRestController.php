@@ -23,7 +23,7 @@ class ShopImageRestController extends REST_Controller{
 		header('Access-Control-Allow-Origin:*');
 		$response_data = $this->ShopImageModel->getShopDetailImg($shop_image_id);
 		
-		$response_data->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($response_data->shop_id, 6);
+		$response_data->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid(3 ,$response_data->shop_id, 6);
 		
 		$response["response_code"] = "200";
 		$response["response_data"] = $response_data;
