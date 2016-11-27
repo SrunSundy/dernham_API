@@ -10,6 +10,12 @@ class ShopImageRestController extends REST_Controller{
 	
 		parent::__construct();
 	
+		if(strcasecmp($this->input->method(), "POST") == 0 && strcasecmp($_SERVER["CONTENT_TYPE"],"application/json")!=0 ){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
 		$this->load->model('ShopImageModel');
 	
 	}
@@ -20,15 +26,16 @@ class ShopImageRestController extends REST_Controller{
 	
 	public function getshopimage_get( $shop_image_id = null ){
 		
-		header('Access-Control-Allow-Origin:*');
 		$response_data = $this->ShopImageModel->getShopDetailImg($shop_image_id);
 		
-		$response_data->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid(3 ,$response_data->shop_id, 6);
-		
+		if($response_data){
+			$response_data->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($response_data->shop_id, 6, 3);		
+		}
+
 		$response["response_code"] = "200";
 		$response["response_data"] = $response_data;
-		
-		$this->response($response);
+
+		$this->response($response, 200);
 	}
 }
 

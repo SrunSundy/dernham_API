@@ -9,7 +9,14 @@ class ShopRestController extends REST_Controller{
 		
 		parent::__construct();
 
+		if(strcasecmp($this->input->method(), "POST") == 0 && strcasecmp($_SERVER["CONTENT_TYPE"],"application/json")!=0 ){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
 		$this->load->model('ShopModel');
+		
 		
 	}
 	public function index(){
@@ -33,15 +40,13 @@ class ShopRestController extends REST_Controller{
 				"current_lng" : 104.88913536071777
 			}
 		} */
-		
-		header('Access-Control-Allow-Origin:*');
 		$request = json_decode($this->input->raw_input_stream,true);
 		
 		if(!isset($request["request_data"])){
 			$response["response_code"] = "400";
-			$response["response_msg"] = "bad request";
-			$this->response($response);
-			return;
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
 		}
 		$request = $request["request_data"];
 		
@@ -55,47 +60,50 @@ class ShopRestController extends REST_Controller{
 		$responsedata = $responsequery["response_data"];
 		
 		$this->load->helper('timecalculator');
-		foreach($responsedata as $item){
-				
-			$now = new DateTime($item->shop_time_zone);
-			$now = strtotime($now->format('H:i:s'));
-			$is_open = 0;
-			$time_to_close = 0;
-			$time_to_open = 0;
 		
-			if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
-				$is_open = 1;
-				$time_to_close = substractCurrentTime($item->shop_time_zone, $item->shop_close_time);
-				$time_to_close = covertToMilisecond($time_to_close);
+		if(count($responsedata) > 0){
+			foreach($responsedata as $item){
+			
+				$now = new DateTime($item->shop_time_zone);
+				$now = strtotime($now->format('H:i:s'));
+				$is_open = 0;
+				$time_to_close = 0;
+				$time_to_open = 0;
+			
+				if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
+					$is_open = 1;
+					$time_to_close = substractCurrentTime($item->shop_time_zone, $item->shop_close_time);
+					$time_to_close = covertToMilisecond($time_to_close);
+				}
+			
+				if(strtotime($item->shop_opening_time) > $now){
+					$time_to_open = substractCurrentTime($item->shop_time_zone, $item->shop_opening_time);
+					$time_to_open = covertToMilisecond($time_to_open);
+				}
+				if(strtotime($item->shop_close_time) < $now){
+					$subfulltime = substractCurrentTime($item->shop_time_zone, "24:00:00");
+					$subzerotime = substractTime($item->shop_opening_time, "00:00:00");
+					$time_to_open = addTime($subfulltime , $subzerotime); // already return as milisecond
+				}
+			
+				$item->is_shop_open = $is_open;
+				$item->time_to_close = $time_to_close;
+				$item->time_to_open = $time_to_open;
+			
+				$item->shop_img = [];
+				if($item->shop_has_detail_img != null && $item->shop_has_detail_img !="" && $item->shop_has_detail_img > 0){
+					$this->load->model('ShopImageModel');
+					$item->shop_img = $this->ShopImageModel->getShopDetailImgByShopid($item->shop_id, 6, 3);
+				}
+			
 			}
-				
-			if(strtotime($item->shop_opening_time) > $now){
-				$time_to_open = substractCurrentTime($item->shop_time_zone, $item->shop_opening_time);
-				$time_to_open = covertToMilisecond($time_to_open);
-			}
-			if(strtotime($item->shop_close_time) < $now){
-				$subfulltime = substractCurrentTime($item->shop_time_zone, "24:00:00");
-				$subzerotime = substractTime($item->shop_opening_time, "00:00:00");
-				$time_to_open = addTime($subfulltime , $subzerotime); // already return as milisecond
-			}
-		
-			$item->is_shop_open = $is_open;
-			$item->time_to_close = $time_to_close;
-			$item->time_to_open = $time_to_open;
-				
-			$item->shop_img = [];
-			if($item->shop_has_detail_img != null && $item->shop_has_detail_img !="" && $item->shop_has_detail_img > 0){
-				$this->load->model('ShopImageModel');
-				$item->shop_img = $this->ShopImageModel->getShopDetailImgByShopid(3, $item->shop_id, 6);
-			}
-				
 		}
-		$response["response_code"] = "200";
 		$response["total_record"] = $responsequery["total_record"];
 		$response["total_page"] = $responsequery["total_page"];
+		$response["response_code"] = "200";
 		$response["response_data"] = $responsedata;
 		
-		$this->response($response);
+		$this->response($response, 200);
 	}
 	
 	public function getshop_post(){
@@ -109,86 +117,88 @@ class ShopRestController extends REST_Controller{
 		} */
 		
 		$response = array();
-		header('Access-Control-Allow-Origin:*');
 		$request = json_decode($this->input->raw_input_stream,true);
 		
 		if(!isset($request["request_data"])){
 			$response["response_code"] = "400";
-			$response["response_msg"] = "bad request";
-			$this->response($response);
-			return;
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
 		}
 		
-		$request = $request["request_data"];
-
 		$this->load->helper('validate');
 		$this->load->helper('timecalculator');
-		
+		$request = $request["request_data"];
 		if(!isset($request["shop_id"]) || !validateNumeric($request["shop_id"])){
 			$response["response_code"] = "400";
-			$response["response_msg"] = "invalid shop_id";
-			$this->response($response);
+			$response["error"] = "invalid shop_id";
+			$this->response($response, 400);
+			die();
 		}
+				
 		if(!isset($request["current_lat"])) $request["current_lat"] = 0;
 		if(!isset($request["current_lng"])) $request["current_lng"] = 0;
 		
 		$item = $this->ShopModel->getShop($request);
 		
-		$shop_id = (int)$request["shop_id"];
-		
-		$now = new DateTime($item->shop_time_zone);
-		$now = strtotime($now->format('H:i:s'));
-		$is_open = 0;
-		$time_to_close = 0;
-		$time_to_open = 0;
+		if($item){
+			$shop_id = (int)$request["shop_id"];
 			
-		if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
-			$is_open = 1;
-			$time_to_close = substractCurrentTime($item->shop_time_zone, $item->shop_close_time);
-			$time_to_close = covertToMilisecond($time_to_close);
-		}
-		
-		if(strtotime($item->shop_opening_time) > $now){
-			$time_to_open = substractCurrentTime($item->shop_time_zone, $item->shop_opening_time);
-			$time_to_open = covertToMilisecond($time_to_open);
-		}
-		
-		if(strtotime($item->shop_close_time) < $now){
-			$subfulltime = substractCurrentTime($item->shop_time_zone, "24:00:00");
-			$subzerotime = substractTime($item->shop_opening_time, "00:00:00");
-			$time_to_open = addTime($subfulltime , $subzerotime); // already return as milisecond
-		}
-		$this->load->model('ProductModel');
-		
-		$item->product_average_price = $this->ProductModel->getProAveragePriceByShopid($shop_id)->average_price;
-		$item->is_shop_open = $is_open;
-		$item->time_to_close = $time_to_close;
-		$item->time_to_open = $time_to_open;
-		
-		$this->load->model('ServeCategoryModel');
-		$item->serve_category = $this->ServeCategoryModel->getServeCategoryByShopid($shop_id);
-		
-		$this->load->model('FacilityModel');
-		$item->shop_facility = $this->FacilityModel->getFacilityByShopid($shop_id);
-		
-		$this->load->model('ShopImageModel');
-		$item->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid(3 ,$shop_id, 6);
+			$now = new DateTime($item->shop_time_zone);
+			$now = strtotime($now->format('H:i:s'));
+			$is_open = 0;
+			$time_to_close = 0;
+			$time_to_open = 0;
+				
+			if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
+				$is_open = 1;
+				$time_to_close = substractCurrentTime($item->shop_time_zone, $item->shop_close_time);
+				$time_to_close = covertToMilisecond($time_to_close);
+			}
 			
-		$item->shop_popular_product = $this->ProductModel->getPopularProByShopid($shop_id, 6);
-		
-		$item->shop_branch = [];
-		if($item->branch_id != null && $item->branch_id != "" && $item->branch_id > 0 ){
-			$branch_request["shop_id"] = $shop_id;
-			$branch_request["branch_id"] = $item->branch_id;
-			$branch_request["limit"] = 6;
-			$item->shop_branch = $this->ShopModel->getShopRelatedBranch($branch_request);
+			if(strtotime($item->shop_opening_time) > $now){
+				$time_to_open = substractCurrentTime($item->shop_time_zone, $item->shop_opening_time);
+				$time_to_open = covertToMilisecond($time_to_open);
+			}
+			
+			if(strtotime($item->shop_close_time) < $now){
+				$subfulltime = substractCurrentTime($item->shop_time_zone, "24:00:00");
+				$subzerotime = substractTime($item->shop_opening_time, "00:00:00");
+				$time_to_open = addTime($subfulltime , $subzerotime); // already return as milisecond
+			}
+			$this->load->model('ProductModel');
+			
+			$item->product_average_price = $this->ProductModel->getProAveragePriceByShopid($shop_id)->average_price;
+			$item->is_shop_open = $is_open;
+			$item->time_to_close = $time_to_close;
+			$item->time_to_open = $time_to_open;
+			
+			$this->load->model('ServeCategoryModel');
+			$item->serve_category = $this->ServeCategoryModel->getServeCategoryByShopid($shop_id);
+			
+			$this->load->model('FacilityModel');
+			$item->shop_facility = $this->FacilityModel->getFacilityByShopid($shop_id);
+			
+			$this->load->model('ShopImageModel');
+			$item->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($shop_id, 6, 3);
+				
+			$item->shop_popular_product = $this->ProductModel->getPopularProByShopid($shop_id, 6);
+			
+			$item->shop_branch = [];
+			if($item->branch_id != null && $item->branch_id != "" && $item->branch_id > 0 ){
+				$branch_request["shop_id"] = $shop_id;
+				$branch_request["branch_id"] = $item->branch_id;
+				$branch_request["limit"] = 6;
+				$item->shop_branch = $this->ShopModel->getShopRelatedBranch($branch_request);
+			}
 		}
+		
 		
 		$response_data = $item;
 		
 		$response["response_code"] = "200";
 		$response["response_data"] = $response_data;
-		$this->response($response);
+		$this->response($response, 200);
 	}	
 	
 }
