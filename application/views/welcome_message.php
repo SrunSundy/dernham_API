@@ -83,6 +83,45 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	</div>
 
 	<p class="footer">Page rendered in <strong>{elapsed_time}</strong> seconds. <?php echo  (ENVIRONMENT === 'development') ?  'CodeIgniter Version <strong>' . CI_VERSION . '</strong>' : '' ?></p>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+   
+    $.ajax({
+        type : "POST",
+        url: "http://localhost/dernham_API/API/ShopRestController/listshop",    
+        headers : {
+            "Content-type" : "application/json",
+			"X-API-KEY": "$4v8J/J)&/d)Lk:yx*87[)NyZd5<dJ>zm`Ur[TJ@"
+		},
+        data: JSON.stringify({
+        	"request_data" : {
+				"row" : 10,
+				"page": 1,
+				"serve_category_id" : 0,
+				"is_nearby" : false,
+				"nearby_value": 1000000,
+				"is_popular" : false,
+				"country_id" : 0,
+				"city_id" : 0,
+				"district_id" : 0,
+				"commune_id" : 0,
+				"current_lat" : 11.565723328439192,
+				"current_lng" : 104.88913536071777
+			}
+        }),
+        success: function(result){
+			console.log(result);
+        },
+        error: function(xhr){
+        	data = JSON.parse(xhr.responseText);
+			alert(xhr.status+" "+data.error);
+        }
+    });
+
+});
+</script>	
 </div>
 
 </body>
