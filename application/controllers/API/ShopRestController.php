@@ -93,7 +93,8 @@ class ShopRestController extends REST_Controller{
 				$item->shop_img = [];
 				if($item->shop_has_detail_img != null && $item->shop_has_detail_img !="" && $item->shop_has_detail_img > 0){
 					$this->load->model('ShopImageModel');
-					$item->shop_img = $this->ShopImageModel->getShopDetailImgByShopid($item->shop_id, 6, 3);
+					$this->load->helper('ImageType');
+					$item->shop_img = $this->ShopImageModel->getShopDetailImgByShopid($item->shop_id, 6, ImageType::Detail);
 				}
 			
 			}
@@ -180,7 +181,8 @@ class ShopRestController extends REST_Controller{
 			$item->shop_facility = $this->FacilityModel->getFacilityByShopid($shop_id);
 			
 			$this->load->model('ShopImageModel');
-			$item->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($shop_id, 6, 3);
+			$this->load->helper('ImageType');
+			$item->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($shop_id, 6, ImageType::Detail);
 				
 			$item->shop_popular_product = $this->ProductModel->getPopularProByShopid($shop_id, 6);
 			

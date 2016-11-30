@@ -29,7 +29,8 @@ class ShopImageRestController extends REST_Controller{
 		$response_data = $this->ShopImageModel->getShopDetailImg($shop_image_id);
 		
 		if($response_data){
-			$response_data->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($response_data->shop_id, 6, 3);		
+			$this->load->helper('ImageType');
+			$response_data->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($response_data->shop_id, 6, ImageType::Detail);		
 		}
 
 		$response["response_code"] = "200";
