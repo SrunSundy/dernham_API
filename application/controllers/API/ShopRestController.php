@@ -94,7 +94,7 @@ class ShopRestController extends REST_Controller{
 				if($item->shop_has_detail_img != null && $item->shop_has_detail_img !="" && $item->shop_has_detail_img > 0){
 					$this->load->model('ShopImageModel');
 					$this->load->helper('ImageType');
-					$item->shop_img = $this->ShopImageModel->getShopDetailImgByShopid($item->shop_id, 6, ImageType::Detail);
+					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($item->shop_id, 6, ImageType::Detail);
 				}
 			
 			}
@@ -175,23 +175,23 @@ class ShopRestController extends REST_Controller{
 			$item->time_to_open = $time_to_open;
 			
 			$this->load->model('ServeCategoryModel');
-			$item->serve_category = $this->ServeCategoryModel->getServeCategoryByShopid($shop_id);
+			$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($shop_id);
 			
 			$this->load->model('FacilityModel');
-			$item->shop_facility = $this->FacilityModel->getFacilityByShopid($shop_id);
+			$item->shop_facility = $this->FacilityModel->listFacilityByShopid($shop_id);
 			
 			$this->load->model('ShopImageModel');
 			$this->load->helper('ImageType');
-			$item->shop_related_img = $this->ShopImageModel->getShopDetailImgByShopid($shop_id, 6, ImageType::Detail);
+			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($shop_id, 6, ImageType::Detail);
 				
-			$item->shop_popular_product = $this->ProductModel->getPopularProByShopid($shop_id, 6);
+			$item->shop_popular_product = $this->ProductModel->listPopularProByShopid($shop_id, 6);
 			
 			$item->shop_branch = [];
 			if($item->branch_id != null && $item->branch_id != "" && $item->branch_id > 0 ){
 				$branch_request["shop_id"] = $shop_id;
 				$branch_request["branch_id"] = $item->branch_id;
 				$branch_request["limit"] = 6;
-				$item->shop_branch = $this->ShopModel->getShopRelatedBranch($branch_request);
+				$item->shop_branch = $this->ShopModel->listShopRelatedBranch($branch_request);
 			}
 		}
 		

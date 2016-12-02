@@ -8,7 +8,7 @@ class ShopImageModel extends CI_Model{
 	}
 	
 
-	public function getShopDetailImgByShopid( $shop_id , $limit , $img_type){
+	public function listShopDetailImgByShopid( $shop_id , $limit , $img_type){
 			
 		$sql = "SELECT 
 					img.sh_img_id,

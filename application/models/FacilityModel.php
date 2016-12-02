@@ -7,7 +7,7 @@ class FacilityModel extends CI_Model{
 		$this->load->database();
 	}
 	
-	function getFacilityByShopid( $shop_id ){
+	function listFacilityByShopid( $shop_id ){
 		
 		$sql = "SELECT 
 					facility.sh_facility_icon,

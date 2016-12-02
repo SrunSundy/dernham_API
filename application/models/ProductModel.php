@@ -7,7 +7,7 @@ class ProductModel extends CI_Model{
 		$this->load->database();
 	}
 	
-	function getPopularProByShopid( $shop_id , $limit){
+	function listPopularProByShopid( $shop_id , $limit){
 		
 		$sql = "SELECT 
 					pro.pro_id,

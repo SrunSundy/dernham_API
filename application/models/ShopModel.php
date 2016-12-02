@@ -155,7 +155,7 @@ class ShopModel extends CI_Model{
 					
 	}
 	
-	public function getShopRelatedBranch( $request ){
+	public function listShopRelatedBranch( $request ){
 		
 		$sql = "SELECT  
 					sh.shop_id,

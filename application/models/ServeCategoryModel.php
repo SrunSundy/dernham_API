@@ -20,7 +20,7 @@ class ServeCategoryModel extends CI_Model{
 		
 	}
 	
-	function getServeCategoryByShopid( $shop_id ){
+	function listServeCategoryByShopid( $shop_id ){
 		
 		$sql = "SELECT 
 					cate.serve_category_name
