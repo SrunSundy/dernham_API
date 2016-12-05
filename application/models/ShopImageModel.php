@@ -8,19 +8,27 @@ class ShopImageModel extends CI_Model{
 	}
 	
 
-	public function listShopDetailImgByShopid( $shop_id , $limit , $img_type){
-			
+	public function listShopDetailImgByShopid( $shop_id , $limit , $img_type, $is_front_show){
+
+		$param = array();
 		$sql = "SELECT 
 					img.sh_img_id,
 					img.sh_img_name
 				FROM nham_shop_image img
 				WHERE img.sh_img_status = 1
 				AND img.sh_img_type = ?
-				AND img.shop_id = ?
-				ORDER BY img.sh_img_dis_order
-				LIMIT ?";
+				AND img.shop_id = ? ";
 		
-		$query = $this->db->query($sql , array($img_type ,$shop_id ,$limit));
+		
+		array_push($param, $img_type ,$shop_id);
+		if($is_front_show){ 
+			$sql .=" AND img.sh_img_is_front_show = ? "; 
+			array_push($param, 1);
+		}
+		$sql .=	" ORDER BY img.sh_img_dis_order LIMIT ? ";
+		array_push($param, $limit);
+		
+		$query = $this->db->query($sql , $param);
 		$response = $query->result();
 		
 		return $response;

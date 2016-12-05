@@ -89,12 +89,16 @@ class ShopRestController extends REST_Controller{
 				$item->is_shop_open = $is_open;
 				$item->time_to_close = $time_to_close;
 				$item->time_to_open = $time_to_open;
+				
+				$this->load->helper('distancecalculator');
+				$item->distance = distanceFormat($item->distance);
 			
 				$item->shop_img = [];
 				if($item->shop_has_detail_img != null && $item->shop_has_detail_img !="" && $item->shop_has_detail_img > 0){
 					$this->load->model('ShopImageModel');
 					$this->load->helper('ImageType');
-					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($item->shop_id, 6, ImageType::Detail);
+					$this->load->helper('YesNoImageFrontShow');
+					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($item->shop_id, 6, ImageType::Detail, YesNoImageFrontShow::YES);
 				}
 			
 			}
@@ -173,6 +177,16 @@ class ShopRestController extends REST_Controller{
 			$item->is_shop_open = $is_open;
 			$item->time_to_close = $time_to_close;
 			$item->time_to_open = $time_to_open;
+			$item->product_average_price = number_format((float)$item->product_average_price, 2, '.', '');
+			if($item->shop_phone){
+				$item->shop_phone = explode("|",$item->shop_phone);
+			}
+			if($item->shop_working_day){
+				$item->shop_working_day= explode("|",$item->shop_working_day);
+			}
+			
+			$this->load->helper('distancecalculator');
+			$item->distance = distanceFormat($item->distance);
 			
 			$this->load->model('ServeCategoryModel');
 			$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($shop_id);
@@ -182,7 +196,8 @@ class ShopRestController extends REST_Controller{
 			
 			$this->load->model('ShopImageModel');
 			$this->load->helper('ImageType');
-			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($shop_id, 6, ImageType::Detail);
+			$this->load->helper('YesNoImageFrontShow');
+			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($shop_id, 6, ImageType::Detail, YesNoImageFrontShow::NO);
 				
 			$item->shop_popular_product = $this->ProductModel->listPopularProByShopid($shop_id, 6);
 			
