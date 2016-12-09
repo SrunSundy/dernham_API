@@ -64,6 +64,9 @@ class ShopRestController extends REST_Controller{
 		if(count($responsedata) > 0){
 			foreach($responsedata as $item){
 			
+				if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
+					$item->shop_time_zone = "Asia/Phnom_Penh";
+				}
 				$now = new DateTime($item->shop_time_zone);
 				$now = strtotime($now->format('H:i:s'));
 				$is_open = 0;
@@ -149,6 +152,9 @@ class ShopRestController extends REST_Controller{
 		if($item){
 			$shop_id = (int)$request["shop_id"];
 			
+			if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
+				$item->shop_time_zone = "Asia/Phnom_Penh";
+			}
 			$now = new DateTime($item->shop_time_zone);
 			$now = strtotime($now->format('H:i:s'));
 			$is_open = 0;
