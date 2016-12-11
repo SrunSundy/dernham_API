@@ -99,9 +99,9 @@ class ShopRestController extends REST_Controller{
 				$item->shop_img = [];
 				if($item->shop_has_detail_img != null && $item->shop_has_detail_img !="" && $item->shop_has_detail_img > 0){
 					$this->load->model('ShopImageModel');
-					$this->load->helper('ImageType');
-					$this->load->helper('YesNoImageFrontShow');
-					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($item->shop_id, 6, ImageType::Detail, YesNoImageFrontShow::YES);
+					$this->load->helper('imagetype');
+					$this->load->helper('yesnoimagefrontshow');
+					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($item->shop_id, 6, imagetype::Detail, yesnoimagefrontshow::YES);
 				}
 			
 			}
@@ -201,9 +201,9 @@ class ShopRestController extends REST_Controller{
 			$item->shop_facility = $this->FacilityModel->listFacilityByShopid($shop_id);
 			
 			$this->load->model('ShopImageModel');
-			$this->load->helper('ImageType');
-			$this->load->helper('YesNoImageFrontShow');
-			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($shop_id, 6, ImageType::Detail, YesNoImageFrontShow::NO);
+			$this->load->helper('imageyype');
+			$this->load->helper('yesnoimagefrontshow');
+			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($shop_id, 6, imagetype::Detail, yesnoimagefrontshow::NO);
 				
 			$item->shop_popular_product = $this->ProductModel->listPopularProByShopid($shop_id, 6);
 			
