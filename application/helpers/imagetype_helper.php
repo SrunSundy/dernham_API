@@ -1,5 +1,5 @@
 <?php
-abstract class ImageType
+abstract class imagetype
 {
 	const Logo = 1;
 	const Cover = 2;
