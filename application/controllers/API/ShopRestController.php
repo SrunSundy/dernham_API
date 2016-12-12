@@ -60,6 +60,7 @@ class ShopRestController extends REST_Controller{
 		$responsedata = $responsequery["response_data"];
 		
 		$this->load->helper('timecalculator');
+	
 		
 		if(count($responsedata) > 0){
 			foreach($responsedata as $item){
@@ -101,16 +102,76 @@ class ShopRestController extends REST_Controller{
 					$this->load->model('ShopImageModel');
 					$this->load->helper('imagetype');
 					$this->load->helper('yesnoimagefrontshow');
-					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($item->shop_id, 6, imagetype::Detail, yesnoimagefrontshow::YES);
+					
+					$request_img["shop_id"] = $item->shop_id;
+					$request_img["limit"] = 6 ; 
+					$request_img["img_type"] = imagetype::Detail;
+					$request_img["is_front_show"] = yesnoimagefrontshow::YES;
+		
+					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
 				}
 			
 			}
 		}
+		$this->load->helper('imagepath');
+		
 		$response["total_record"] = $responsequery["total_record"];
 		$response["total_page"] = $responsequery["total_page"];
 		$response["response_code"] = "200";
 		$response["response_data"] = $responsedata;
 		
+		$this->response($response, 200);
+	}
+	
+	public function listnearbyshop_post(){
+				
+		/* {
+			"request_data" : {
+				"current_lat" : 11.565723328439192,
+				"current_lng" :104.88913536071777,
+				"nearby_value" : 3			
+			}
+		} */
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		if(!isset($request["current_lat"])) $request["current_lat"] = 0;
+		if(!isset($request["current_lng"])) $request["current_lng"] = 0;
+		if(!isset($request["nearby_value"])) $request["nearby_value"] = 0.5;
+		
+		$responsedata = $this->ShopModel->listNearbyShop($request);
+		
+		if(count($responsedata) > 0){
+			$this->load->model('ServeCategoryModel');
+			$this->load->helper('distancecalculator');
+			
+			foreach($responsedata as $item){
+				if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
+					$item->shop_time_zone = "Asia/Phnom_Penh";
+				}
+				$now = new DateTime($item->shop_time_zone);
+				$now = strtotime($now->format('H:i:s'));
+				
+				$is_open = 0;
+				
+				if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
+					$is_open = 1;
+				}
+				$item->is_shop_open = $is_open;							
+				$item->distance = distanceFormat($item->distance);
+								
+				$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($item->shop_id);
+			}		
+		}
+				
+		$response["response_code"] = "200";
+		$response["response_data"] = $responsedata;
 		$this->response($response, 200);
 	}
 	
@@ -201,9 +262,12 @@ class ShopRestController extends REST_Controller{
 			$item->shop_facility = $this->FacilityModel->listFacilityByShopid($shop_id);
 			
 			$this->load->model('ShopImageModel');
-			$this->load->helper('imageyype');
-			$this->load->helper('yesnoimagefrontshow');
-			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($shop_id, 6, imagetype::Detail, yesnoimagefrontshow::NO);
+			$this->load->helper('imagetype');
+			
+			$request_img["shop_id"] = $shop_id;
+			$request_img["limit"] = 6 ;
+			$request_img["img_type"] = imagetype::Detail;
+			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
 				
 			$item->shop_popular_product = $this->ProductModel->listPopularProByShopid($shop_id, 6);
 			

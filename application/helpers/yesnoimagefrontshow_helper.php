@@ -1,5 +1,5 @@
 <?php
-abstract class tesnoimagefrontshow
+abstract class yesnoimagefrontshow
 {
 	const YES = TRUE;
 	const NO = FALSE;

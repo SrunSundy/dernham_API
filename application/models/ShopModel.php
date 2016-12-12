@@ -23,7 +23,7 @@ class ShopModel extends CI_Model{
 			
 		$limit = $row;
 		$offset = ($row*$page)-$row;
-		$order_type = " sh.shop_id ";
+		$order_type = " sh.shop_id DESC ";
 			
 		$param = array();
 		$sql = "SELECT sh.shop_id,
@@ -43,7 +43,7 @@ class ShopModel extends CI_Model{
 				LEFT JOIN nham_country cou ON cou.country_id = sh.country_id
 				LEFT JOIN nham_city city ON city.city_id = sh.city_id
 				LEFT JOIN nham_district dis ON dis.district_id = sh.district_id
-				LEFT JOIN nham_commune com ON com.commune_id = sh.commune_id";
+				LEFT JOIN nham_commune com ON com.commune_id = sh.commune_id ";
 
 		$this->load->helper('validate');
 		if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
@@ -84,12 +84,12 @@ class ShopModel extends CI_Model{
 		
 		if( isset($request["is_nearby"]) && $request["is_nearby"] == true ){			
 			$order_type = " distance ";
-			$nearby_value = 1;
+			
 			if(isset($request["nearby_value"]) && validateNumeric($request["nearby_value"]) ){
-				$nearby_value = (int)$request["nearby_value"];				
-			}				
-			$sql .= "\n HAVING distance < ?";
-			array_push($param, $nearby_value );
+				$nearby_value = (int)$request["nearby_value"];	
+				$sql .= "\n HAVING distance < ? ";
+				array_push($param, $nearby_value );
+			}							
 		}
 
 		
@@ -109,6 +109,37 @@ class ShopModel extends CI_Model{
 		
 		$query = $this->db->query($sql , $param);
 		$response["response_data"] = $query->result();
+			
+		return $response;
+		
+	}
+	
+	public function listNearbyShop( $request ){
+		
+		$current_lat = (float)$request["current_lat"];
+		$current_lng = (float)$request["current_lng"];
+		$nearby_value = (float)$request["nearby_value"];
+		 
+		if(!$current_lat || $current_lat > 90 || $current_lat <-90) $current_lat= 0;
+		if(!$current_lng || $current_lng > 180 || $current_lng < -180) $current_lng= 0;
+		if(!$nearby_value || $nearby_value <= 0) $nearby_value = 0.5;
+		$sql = "SELECT 
+					sh.shop_id,
+					sh.shop_logo,
+					sh.shop_name_en,
+					sh.shop_name_kh,
+					sh.shop_address,
+					sh.shop_time_zone,
+					sh.shop_opening_time,
+					sh.shop_close_time,
+					sh.shop_lat_point,
+					sh.shop_lng_point,
+					SQRT(POW(69.1 * (sh.shop_lat_point - ? ), 2) +
+						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
+				FROM nham_shop sh
+				HAVING distance < ? ORDER BY distance";
+		$query = $this->db->query($sql , array($current_lat, $current_lng, $nearby_value));
+		$response = $query->result();
 			
 		return $response;
 		

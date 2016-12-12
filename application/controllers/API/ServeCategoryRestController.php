@@ -22,7 +22,7 @@ class ServeCategoryRestController extends REST_Controller{
 		$this->load->view('index');
 	}
 	
-	public function listServeCategory_get(){
+	public function listservecategory_get(){
 		
 		$response_data = $this->ServeCategoryModel->listServeCategory();
 		$response["response_code"] = "200";
