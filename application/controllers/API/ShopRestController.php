@@ -113,7 +113,6 @@ class ShopRestController extends REST_Controller{
 			
 			}
 		}
-		$this->load->helper('imagepath');
 		
 		$response["total_record"] = $responsequery["total_record"];
 		$response["total_page"] = $responsequery["total_page"];
@@ -173,6 +172,78 @@ class ShopRestController extends REST_Controller{
 		$response["response_code"] = "200";
 		$response["response_data"] = $responsedata;
 		$this->response($response, 200);
+	}
+	
+	public function listsearchshop_post(){
+		
+		/* {
+			"request_data" : {
+			"row" : 10,
+			"page": 1,
+			"serve_category_id" : 0,
+			"is_nearby" : false,
+			"is_popular" : false,
+			"is_latest" : false,
+			"is_best_match": true,
+			"country_id" : 0,
+			"city_id" : 0,
+			"district_id" : 0,
+			"commune_id" : 0,
+			"current_lat" : 11.565723328439192,
+			"current_lng" : 104.88913536071777,
+			"srch_text": ""
+			}
+		} */
+		
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		
+		if(!isset($request["row"])) $request["row"] = 10;
+		if(!isset($request["page"])) $request["page"] = 1;
+		if(!isset($request["current_lat"])) $request["current_lat"] = 0;
+		if(!isset($request["current_lng"])) $request["current_lng"] = 0;
+		if(!isset($request["srch_text"])) $request["srch_text"] = "";
+		
+		$responsequery = $this->ShopModel->listSearchShop($request);		
+		$responsedata = $responsequery["response_data"];
+		
+		if(count($responsedata) > 0){
+			$this->load->model('ServeCategoryModel');
+			$this->load->helper('distancecalculator');
+				
+			foreach($responsedata as $item){
+				if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
+					$item->shop_time_zone = "Asia/Phnom_Penh";
+				}
+				$now = new DateTime($item->shop_time_zone);
+				$now = strtotime($now->format('H:i:s'));
+		
+				$is_open = 0;
+		
+				if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
+					$is_open = 1;
+				}
+				$item->is_shop_open = $is_open;
+				$item->distance = distanceFormat($item->distance);
+		
+				$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($item->shop_id);
+			}
+		}
+		
+		$response["total_record"] = $responsequery["total_record"];
+		$response["total_page"] = $responsequery["total_page"];
+		$response["response_code"] = "200";
+		$response["response_data"] = $responsedata;
+		
+		$this->response($response, 200);
+		
 	}
 	
 	public function getshop_post(){
