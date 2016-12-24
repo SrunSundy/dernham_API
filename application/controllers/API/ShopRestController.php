@@ -165,7 +165,20 @@ class ShopRestController extends REST_Controller{
 				$item->is_shop_open = $is_open;							
 				$item->distance = distanceFormat($item->distance);
 								
-				$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($item->shop_id);
+				$serve_cate_string = $this->ServeCategoryModel->listServeCategoryByShopid($item->shop_id);
+				$serve_cate_str = "";
+				if(count($serve_cate_str)> 0){
+					for($i=0; $i<count($serve_cate_string); $i++){
+						$serve_cate_str .= $serve_cate_string[$i]->serve_category_name . " - ";
+					}
+				}				
+				
+				$shopopen = new DateTime($item->shop_opening_time);	
+				$shopclose = new DateTime($item->shop_close_time);
+				
+				$item->shop_opening_time = $shopopen->format('h:i a');
+				$item->shop_close_time = $shopclose->format('h:i a');
+				$item->serve_category = $serve_cate_str;
 			}		
 		}
 				
