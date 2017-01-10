@@ -187,6 +187,26 @@ class ShopRestController extends REST_Controller{
 		$this->response($response, 200);
 	}
 	
+	public function listPopularShop_get(){
+		
+		//current_lat=11.565723328439&
+		//current_lng=104.889135360&
+		//row=20&
+		//page=2
+		
+		$request["current_lat"] = $this->input->get('current_lat');
+		$request["current_lng"] = $this->input->get('current_lng');
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');
+		
+		$responsequery = $this->ShopModel->listPopularShop($request);
+		$response["response_code"] = "200";
+		$response["response_data"] = $responsequery;
+		$this->response($response, 200);
+		
+		
+	}
+	
 	public function listsearchshop_post(){
 		
 		/* {

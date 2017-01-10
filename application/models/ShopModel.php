@@ -146,6 +146,43 @@ class ShopModel extends CI_Model{
 		
 	}
 	
+	public function listPopularShop($request){
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		$current_lat = (float)$request["current_lat"];
+		$current_lng = (float)$request["current_lng"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		if(!$current_lat || $current_lat > 90 || $current_lat <-90) $current_lat= 0;
+		if(!$current_lng || $current_lng > 180 || $current_lng < -180) $current_lng= 0;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$sql = "SELECT 
+					sh.shop_id,
+					sh.shop_logo,
+					sh.shop_name_en,
+					sh.shop_name_kh,
+					sh.shop_address,
+					sh.shop_time_zone,
+					sh.shop_opening_time,
+					sh.shop_close_time,
+					SQRT(POW(69.1 * (sh.shop_lat_point - ? ), 2) +
+						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
+				FROM nham_shop sh
+				WHERE sh.shop_status = 1
+				ORDER by sh.shop_dis_order asc,sh.shop_view_count desc 
+				LIMIT ? OFFSET ? ";
+		
+		$query = $this->db->query($sql , array($current_lat, $current_lng, $limit, $offset));
+		$response = $query->result();
+			
+		return $response;
+	}
+	
 	public function listSearchShop($request){
 		
 		$row = (int)$request["row"];
@@ -297,6 +334,7 @@ class ShopModel extends CI_Model{
 		return $response;
 					
 	}
+	
 	
 	public function listShopRelatedBranch( $request ){
 		
