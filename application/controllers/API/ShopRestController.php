@@ -201,7 +201,10 @@ class ShopRestController extends REST_Controller{
 		
 		$responsequery = $this->ShopModel->listPopularShop($request);
 		$response["response_code"] = "200";
-		$response["response_data"] = $responsequery;
+		
+		$response["total_record"] = $responsequery["total_record"];
+		$response["total_page"] = $responsequery["total_page"];
+		$response["response_data"] = $responsequery["response_data"];
 		$this->response($response, 200);
 		
 		

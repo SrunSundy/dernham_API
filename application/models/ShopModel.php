@@ -174,11 +174,22 @@ class ShopModel extends CI_Model{
 						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
 				FROM nham_shop sh
 				WHERE sh.shop_status = 1
-				ORDER by sh.shop_dis_order asc,sh.shop_view_count desc 
-				LIMIT ? OFFSET ? ";
+				ORDER by sh.shop_dis_order asc,sh.shop_view_count desc ";
+		
+		$query_record = $this->db->query($sql ,  array($current_lat, $current_lng));
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+	
+		$sql .= " LIMIT ? OFFSET ? ";
 		
 		$query = $this->db->query($sql , array($current_lat, $current_lng, $limit, $offset));
-		$response = $query->result();
+		$response["response_data"] = $query->result();
 			
 		return $response;
 	}
