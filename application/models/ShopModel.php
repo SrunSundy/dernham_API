@@ -79,7 +79,7 @@ class ShopModel extends CI_Model{
 		}
 		
 		if( isset($request["is_popular"]) && $request["is_popular"] == true ){
-			$order_type = "sh.shop_view_count ";
+			$order_type = " sh.shop_dis_order asc,sh.shop_view_count desc ";
 		}
 		
 		if( isset($request["is_nearby"]) && $request["is_nearby"] == true ){			
