@@ -23,6 +23,12 @@ class ShopRestController extends REST_Controller{
 		$this->load->view('index');
 	}	
 	
+	public function sundy_get(){
+		
+		$this->load->helper("imagepath");
+		echo imagepath::getIconPath();
+	}
+	
 	public function listshop_post(){
 		/* {
 			"request_data" : {
