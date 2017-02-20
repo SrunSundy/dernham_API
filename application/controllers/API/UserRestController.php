@@ -16,12 +16,41 @@ class UserRestController extends REST_Controller{
 			die();
 		}
 		$this->load->model("EmailModel");
+		$this->load->model("UserModel");
 	}
 	
-	function sendtest_post(){
+	function sendVerifiedCode_post(){
 		
-		$responsequery = $this->EmailModel->sendtest();
-		$this->response($responsequery , 200);
+		$sendemail = $this->EmailModel->sendEmail();
+		
+		$this->response($sendemail , 200);
+	}
+	
+	function registerUser_post(){
+		/* {
+		 "request_data" : {
+			"fullname" : "leap",
+			"email" : "leap@gmail.com",
+			"password" : "123"
+		  }
+		} */
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		$status = $this->UserModel->registerUser($request);
+		if($status){
+			$this->response("sucess",200);
+		}else{
+			$this->response("fail",400);
+		}
+		
+		
 	}
 	
 }

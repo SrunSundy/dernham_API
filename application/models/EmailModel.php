@@ -6,7 +6,7 @@ class EmailModel extends CI_Model{
 		parent::__construct();
 	}
 	
-	function send_mail() {
+	/* function send_mail() {
 		$from_email = "jamesundy001@gmail.com";
 		$to_email = $this->input->post('jame001sundy@gmail.com');
 		 
@@ -20,18 +20,43 @@ class EmailModel extends CI_Model{
 		
 		return $this->email->send();
 		 
-		/* //Send mail
+		 //Send mail
 		if($this->email->send()){
 			return true;
 		}			
 		else{
 			return false;
-		} */
+		} 
 			//$this->session->set_flashdata("email_sent","Error in sending Email.");
 		//$this->load->view('email_form');
+	} */
+	
+	function sendEmail(){
+		$to = "jame001sundy@gmail.com";
+		$subject = "DerNham";		
+		$message = "
+				<html>
+					<head>
+						<title>Dernham sends you the verified code to access to your account</title>
+					</head>
+					<body>
+						<p>Your verified code: <strong>123556</strong></p>						
+					</body>
+				</html>
+				";
+		
+		// Always set content-type when sending HTML email
+		$headers = "MIME-Version: 1.0" . "\r\n";
+		$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+		
+		// More headers
+		$headers .= 'From: DerNham <webmaster@example.com>' . "\r\n";
+		$headers .= 'Cc: myboss@example.com' . "\r\n";
+		
+		return mail($to,$subject,$message,$headers);
 	}
 	
-	function sendtest(){
+	/* function sendtest(){
 		$config = Array(
 				'protocol' => 'smtp',
 				'smtp_host' => 'ssl://smtp.googlemail.com',
@@ -57,11 +82,11 @@ class EmailModel extends CI_Model{
 		else
 		{
 		show_error($this->email->print_debugger());
-		}  
+		}   */
 	//	return $this->email->send();
 	
 	
-	}
+	//}
 	
 	
 	
