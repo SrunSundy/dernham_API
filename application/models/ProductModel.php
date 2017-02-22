@@ -106,6 +106,11 @@ class ProductModel extends CI_Model{
 		
 	}
 	
+	function listProductByShopid( $request ){
+		
+		$sql = "SELECT ";
+	}
+	
 	function listPopularProByShopid( $shop_id , $limit){
 		
 		$sql = "SELECT 

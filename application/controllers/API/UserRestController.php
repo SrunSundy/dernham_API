@@ -21,8 +21,7 @@ class UserRestController extends REST_Controller{
 	
 	function sendVerifiedCode_post(){
 		
-		$sendemail = $this->EmailModel->sendEmail();
-		
+		$sendemail = $this->EmailModel->sendEmail();		
 		$this->response($sendemail , 200);
 	}
 	
