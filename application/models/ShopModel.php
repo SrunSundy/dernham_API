@@ -349,21 +349,52 @@ class ShopModel extends CI_Model{
 	
 	public function listShopRelatedBranch( $request ){
 		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		$current_lat = (float)$request["current_lat"];
+		$current_lng = (float)$request["current_lng"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		if(!$current_lat || $current_lat > 90 || $current_lat <-90) $current_lat= 0;
+		if(!$current_lng || $current_lng > 180 || $current_lng < -180) $current_lng= 0;
+	
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
 		$sql = "SELECT  
 					sh.shop_id,
 					sh.shop_name_en,
 					sh.shop_name_kh,
 					sh.shop_logo,
-					sh.shop_address
+					sh.shop_address,
+					SQRT(
+						POW(69.1 * (sh.shop_lat_point - ? ), 2) +
+						POW(69.1 * ( ? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
 				FROM nham_shop sh
 				LEFT JOIN nham_branch br ON br.branch_id = sh.branch_id
 				WHERE sh.shop_status = 1
 				AND br.branch_id = ?
-				AND sh.shop_id <> ?
-				ORDER BY sh.shop_view_count
-				LIMIT ?";
-		$query = $this->db->query($sql , array($request["branch_id"], $request["shop_id"], $request["limit"]));
-		$response = $query->result();
+				AND sh.shop_id <> ? ";
+		array_push($param ,$current_lat, $current_lng, $request["branch_id"], $request["shop_id"]);
+		
+		$query_record = $this->db->query($sql , $param);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= " ORDER BY sh.shop_view_count
+				  LIMIT ? OFFSET ? ";
+		array_push($param , $limit, $offset);
+								
+		$query = $this->db->query($sql , $param);
+		$response["response_data"] = $query->result();
 		
 		return $response;
 		

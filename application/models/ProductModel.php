@@ -108,7 +108,54 @@ class ProductModel extends CI_Model{
 	
 	function listProductByShopid( $request ){
 		
-		$sql = "SELECT ";
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		$shop_id = (int)$request["shop_id"];
+		$is_pop = $request["is_popular"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$params = array();
+		
+		$sql = "SELECT 
+					pro.pro_id,
+					pro.pro_image,
+					pro.pro_name_en,
+					pro.pro_name_kh,
+					pro.pro_price,
+					pro.pro_promote_price,
+					pro.pro_description
+				FROM nham_product pro
+				WHERE pro.pro_status = 1
+				AND pro.shop_id = ? ";
+		
+		array_push($params, $shop_id);
+		if($is_pop == "true" || $is_pop){
+			$sql .= " AND pro.pro_local_popularity = 1 ";									
+		}
+		
+		$query_record = $this->db->query($sql , $params);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .=" ORDER BY pro.pro_local_popularity DESC, pro.pro_view_count
+				  LIMIT ? OFFSET ? ";
+		array_push($params, $limit, $offset);
+		
+		$query = $this->db->query($sql , $params);
+		
+		$response["response_data"] = $query->result();
+		return $response;
 	}
 	
 	function listPopularProByShopid( $shop_id , $limit){
@@ -130,6 +177,24 @@ class ProductModel extends CI_Model{
 		$response = $query->result();
 		return $response;
 		
+	}
+	
+	function getTotalProduct($request){
+		
+		$params = array();
+		$sql = "SELECT count(*) as total_record FROM nham_product pro WHERE pro.pro_status = ? ";
+		array_push($params, 1);
+		
+		$this->load->helper('validate');
+		if(isset($request["shop_id"]) || !IsNullOrEmptyString($request["shop_id"])){
+			$sql .= " AND pro.shop_id= ? ";
+			array_push($params, $request["shop_id"]);
+		}
+		
+		$query = $this->db->query($sql, $params);
+		$response = $query->row();
+		
+		return $response;
 	}
 	
 	function getProAveragePriceByShopid( $shop_id ){

@@ -12,6 +12,14 @@ class ShopImageModel extends CI_Model{
 
 		//$shop_id , $limit , $img_type, $is_front_show, $has_defined
 		
+		if(!isset($request["row"])) $request["row"] = 10;
+		if(!isset($request["page"])) $request["page"] = 1;
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		
+		$limit = $row; 
+		$offset = ($row*$page)-$row;
 		
 		$param = array();
 		$sql = "SELECT 
@@ -39,7 +47,10 @@ class ShopImageModel extends CI_Model{
 		}
 		
 		$sql .=	" ORDER BY img.sh_img_dis_order  ";
-		if(isset($request["limit"])){
+		$sql .= " LIMIT ? OFFSET ? ";
+		
+		array_push($param, $limit, $offset);
+		/* if(isset($request["limit"])){
 						
 			$sql .= " LIMIT ? ";
 			array_push($param, (int)$request["limit"]);
@@ -47,7 +58,7 @@ class ShopImageModel extends CI_Model{
 				$sql .= " OFFSET ? ";
 				array_push($param, (int)$request["offset"]);
 			}
-		}
+		} */
 				
 		$query = $this->db->query($sql , $param);
 		$response = $query->result();
@@ -64,9 +75,9 @@ class ShopImageModel extends CI_Model{
 				WHERE sh_img_status = 1
 				AND sh_img_type = ?
 				AND shop_id = ?";
-		$query = $this->db->query($sql, array($request["limit"]
-				, $request["limit"]
-				, $request["limit"]
+		$query = $this->db->query($sql, array($request["row"]
+				, $request["row"]
+				, $request["row"]
 				, (int)$request["img_type"] 
 				, (int)$request["shop_id"]) );
 		$response = $query->row();

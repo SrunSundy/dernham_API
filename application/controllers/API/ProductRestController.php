@@ -64,6 +64,41 @@ class ProductRestController extends REST_Controller{
 		$this->response($response, 200);
 	}
 	
+	public function listproductbyshopid_get(){
+		
+		//shop_id = 12&		
+		//is_popular : false&
+		//row=20&
+		//page=1
+	
+		$request["shop_id"] = $this->input->get('shop_id');
+		$request["is_popular"] = $this->input->get('is_popular');
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');
+		
+		$this->load->helper('validate');
+		if(!isset($request["shop_id"]) || IsNullOrEmptyString($request["shop_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$is_popular = true;
+		if(!isset($request["is_popular"]) || $request["is_popular"] == null){
+			$is_popular = false;
+		}
+		$request["is_popular"] = $is_popular;
+		
+		$responsequery = $this->ProductModel->listProductByShopid($request);
+		$response["response_code"] = "200";
+		
+		$response["total_record"] = $responsequery["total_record"];
+		$response["total_page"] = $responsequery["total_page"];
+		$response["response_data"] = $responsequery["response_data"];
+		$this->response($response, 200);
+	}
+	
 	
 }
 

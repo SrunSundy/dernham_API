@@ -378,18 +378,34 @@ class ShopRestController extends REST_Controller{
 			$this->load->helper('imagetype');
 			
 			$request_img["shop_id"] = $shop_id;
-			$request_img["limit"] = 6 ;
-			$request_img["img_type"] = imagetype::Detail;
-			$item->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
+			$request_img["row"] = 6 ;
+			$request_img["page"] = 1 ;
+			$request_img["img_type"] = imagetype::Detail;			 
+			$item->shop_related_img["total_record"] = $this->ShopImageModel->countListShopDetailImgByShopid($request_img)->total_record;
+			$item->shop_related_img["data"] = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
 				
-			$item->shop_popular_product = $this->ProductModel->listPopularProByShopid($shop_id, 6);
+			$request_pro["shop_id"] = $shop_id;
+			$request_pro["is_popular"] = true ;
+			$request_pro["page"] = 1 ;
+			$request_pro["row"] = 6;
+			
+			$request_pro_cnt["shop_id"] = $shop_id;
+			$shop_popular_product = $this->ProductModel->listProductByShopid($request_pro);
+			$item->shop_popular_product["total_record"] = $this->ProductModel->getTotalProduct($request_pro_cnt)->total_record;
+			$item->shop_popular_product["data"] = $shop_popular_product["response_data"];
 			
 			$item->shop_branch = [];
 			if($item->branch_id != null && $item->branch_id != "" && $item->branch_id > 0 ){
 				$branch_request["shop_id"] = $shop_id;
 				$branch_request["branch_id"] = $item->branch_id;
-				$branch_request["limit"] = 6;
-				$item->shop_branch = $this->ShopModel->listShopRelatedBranch($branch_request);
+				$branch_request["row"] = 6;
+				$branch_request["page"] = 1;
+				$branch_request["current_lat"] = $request["current_lat"];
+				$branch_request["current_lng"] = $request["current_lng"];
+				
+				$shop_branch = $this->ShopModel->listShopRelatedBranch($branch_request);
+				$item->shop_branch["total_record"] = $shop_branch["total_record"];				
+				$item->shop_branch["data"] = $shop_branch["response_data"];
 			}
 		}
 		

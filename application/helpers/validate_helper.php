@@ -19,3 +19,11 @@ if ( ! function_exists('validateNumeric'))
 		return false;
 	}
 }
+
+
+if ( ! function_exists('IsNullOrEmptyString'))
+{
+	function IsNullOrEmptyString($variable){
+		return (!isset($variable) || trim($variable)==='');
+	}
+}

@@ -58,22 +58,11 @@ class ShopImageRestController extends REST_Controller{
 			die();
 		}
 		
-		if(!isset($request["row"])) $request["row"] = 10;
-		if(!isset($request["page"])) $request["page"] = 1;
-		
-		$row = (int)$request["row"];
-		$page = (int)$request["page"];	
-		$offset = ($row*$page)-$row;
 		
 		$this->load->helper('imagetype');
 		
-		$request_img["shop_id"] = $request["shop_id"]; 
-		$request_img["img_type"] = $request["img_type"]; 
-		$request_img["limit"] = $row ;
-		$request_img["offset"] = $offset ;
-		$response_data = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
-		
-		$response_count = $this->ShopImageModel->countListShopDetailImgByShopid($request_img);
+		$response_data = $this->ShopImageModel->listShopDetailImgByShopid($request);		
+		$response_count = $this->ShopImageModel->countListShopDetailImgByShopid($request);
 		
 	
 		$response["response_code"] = "200";
