@@ -31,16 +31,16 @@ class EmailModel extends CI_Model{
 		//$this->load->view('email_form');
 	} */
 	
-	function sendEmail(){
-		$to = "jame001sundy@gmail.com";
+	function sendEmail( $request ){
+		$to = $request["email"];
 		$subject = "DerNham";		
 		$message = "
 				<html>
 					<head>
-						<title>Dernham sends you the verified code to access to your account</title>
+						<title>Dernham sends you the verification code to access to your account</title>
 					</head>
 					<body>
-						<p>Your verified code: <strong>123556</strong></p>						
+						<p>Your verification code: <strong>".$request["verification_code"]."</strong></p>						
 					</body>
 				</html>
 				";

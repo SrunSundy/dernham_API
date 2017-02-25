@@ -134,7 +134,9 @@ class ShopRestController extends REST_Controller{
 			"request_data" : {
 				"current_lat" : 11.565723328439192,
 				"current_lng" :104.88913536071777,
-				"nearby_value" : 3			
+				"nearby_value" : 3,
+				"row" : 10,
+				"page" : 1	
 			}
 		} */
 		$request = json_decode($this->input->raw_input_stream,true);
@@ -150,7 +152,8 @@ class ShopRestController extends REST_Controller{
 		if(!isset($request["current_lng"])) $request["current_lng"] = 0;
 		if(!isset($request["nearby_value"])) $request["nearby_value"] = 0.5;
 		
-		$responsedata = $this->ShopModel->listNearbyShop($request);
+		$responsemodel = $this->ShopModel->listNearbyShop($request);
+		$responsedata = $responsemodel["response_data"];
 		
 		if(count($responsedata) > 0){
 			$this->load->model('ServeCategoryModel');
@@ -189,6 +192,8 @@ class ShopRestController extends REST_Controller{
 		}
 				
 		$response["response_code"] = "200";
+		$response["total_record"] = $responsemodel["total_record"];
+		$response["total_page"] = $responsemodel["total_page"];
 		$response["response_data"] = $responsedata;
 		$this->response($response, 200);
 	}
@@ -397,7 +402,6 @@ class ShopRestController extends REST_Controller{
 			$item->shop_branch = [];
 			if($item->branch_id != null && $item->branch_id != "" && $item->branch_id > 0 ){
 				$branch_request["shop_id"] = $shop_id;
-				$branch_request["branch_id"] = $item->branch_id;
 				$branch_request["row"] = 6;
 				$branch_request["page"] = 1;
 				$branch_request["current_lat"] = $request["current_lat"];
@@ -416,6 +420,34 @@ class ShopRestController extends REST_Controller{
 		$response["response_data"] = $response_data;
 		$this->response($response, 200);
 	}	
+	
+	public function getshopbranch_get(){
+		
+		//shop_id=1&
+		//row=10&
+		//page=1&
+		//current_lat : 11.565723328439192&
+		//current_lng : 104.88913536071777
+		
+		$request["shop_id"] = $this->input->get('shop_id');
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');
+		$request["current_lat"] = $this->input->get('current_lat');
+		$request["current_lng"] = $this->input->get('current_lng');
+		
+		$this->load->helper('validate');
+		if(!isset($request["shop_id"]) || !validateNumeric($request["shop_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "invalid shop_id";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$response["response_code"] = "200";
+		$response["response_data"] = $this->ShopModel->listShopRelatedBranch($request);
+		
+		$this->response($response, 200);
+	}
 	
 }
 ?>
