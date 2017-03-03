@@ -421,7 +421,7 @@ class ShopRestController extends REST_Controller{
 		$this->response($response, 200);
 	}	
 	
-	public function getshopbranch_get(){
+	public function listshopbranch_get(){
 		
 		//shop_id=1&
 		//row=10&
