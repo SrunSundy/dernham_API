@@ -55,6 +55,14 @@ class UserModel extends CI_Model{
 		return $query->row();
 	}
 	
+	function updateUserProfile( $request){
+		
+		$param = $request["update_param"];
+		$value = $request["update_value"];
+		
+		$sql = " UPDATE nham_user SET ";
+	}
+	
 	
 }
 ?>
