@@ -176,6 +176,11 @@ class UserRestController extends REST_Controller{
 		
 	}
 	
+	function updateuserphoto(){
+		
+		$this->load->model("UploadModel");
+	}
+	
 }
 
 ?>
