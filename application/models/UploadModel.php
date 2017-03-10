@@ -10,19 +10,20 @@ class UploadModel extends CI_Model{
 
 		$file = $request["image_file"];
 		$new_name_file = $request["new_name"];
+		
 		$response = array();
 		if ( ! empty($file))
 		{
 				
 			$new_name = $new_name_file.".jpg";
-			$target_small_dir = "./uploadimages/user/small/";
-			$target_medium_dir = "./uploadimages/user/medium/";
-			$target_big_dir = "./uploadimages/user/big/";
+			$target_small_dir = "./uploadimages/user/";
+			$target_medium_dir = "./uploadimages/user/";
+			$target_big_dir = "./uploadimages/user/";
 		
 			$checkdirectory_small = $this->checkDirectory($target_small_dir);
 			$checkdirectory_medium = $this->checkDirectory($target_medium_dir);
 			$checkdirectory_big = $this->checkDirectory($target_big_dir);
-			$checkdirectory_bignocrop = $this->checkDirectory($target_big_nocrop_dir);
+		
 			$allowfiletype = $this->allowImageType(array("image/jpg","image/jpeg", "image/gif", "image/png"), $file['file']['type']);
 			$allowsize = $this->allowImageSize(10240 , 20000000, $file["file"]["size"]);//20MB
 			//$allowmindimension = $this->allowImageMinimumDimension(500, 300, $file["file"]["tmp_name"]);
@@ -32,8 +33,7 @@ class UploadModel extends CI_Model{
 			array_push($permission ,
 			$checkdirectory_small,
 			$checkdirectory_medium,
-			$checkdirectory_big,
-			$checkdirectory_bignocrop,
+			$checkdirectory_big,			
 			$allowfiletype,
 			$allowsize
 			//$allowmindimension,
@@ -58,9 +58,9 @@ class UploadModel extends CI_Model{
 				if($width < 960){
 					$imgsize = $width;
 				}
-				$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $_FILES["file"]["tmp_name"][$i] , $imgsize, 80);
-				$medium = $this->resizeImageFixpixel($target_medium_dir.$new_name, $_FILES["file"]["tmp_name"][$i] , 180 , 80);									
-				$small = $this->resizeImageFixpixel($target_medium_dir.$new_name, $_FILES["file"]["tmp_name"][$i] , 50, 80);
+				$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $_FILES["file"]["tmp_name"], $imgsize, 80);
+				$medium = $this->resizeImageFixpixel($target_medium_dir.$new_name, $_FILES["file"]["tmp_name"] , 180 , 80);									
+				$small = $this->resizeImageFixpixel($target_medium_dir.$new_name, $_FILES["file"]["tmp_name"], 50, 80);
 				
 				$errorupload = false;
 				array_push($isuploadimg, $big, $medium, $small);
@@ -92,15 +92,7 @@ class UploadModel extends CI_Model{
 	
 	
 	
-	function generateRandomString($length) {
-		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		$charactersLength = strlen($characters);
-		$randomString = '';
-		for ($i = 0; $i < $length; $i++) {
-			$randomString .= $characters[rand(0, $charactersLength - 1)];
-		}
-		return $randomString."_".time();
-	}
+	
 	
 	function checkDirectory( $path ){
 	
@@ -150,7 +142,27 @@ class UploadModel extends CI_Model{
 		$response['is_allow'] = true;
 		return $response;
 	}
-	
+	function checkPermission( $permission ){
+		
+		$crash = false;
+		$response = array();
+		for($i=0 ; $i<count($permission) ; $i++){
+			if(!$permission[$i]["is_allow"]){
+				$crash = true; 
+				$response["error"] = true;
+				$response["message"] = $permission[$i]["message"];
+				break; 
+			}
+		} 
+		
+		if(!$crash){
+			$response["error"] = false;
+			$response["message"] = "Nice";
+		}
+		
+		return $response;
+		
+	}
 	function resizeImageFixpixel($targetfolder , $sourcefolder , $size , $quality){
 	
 		$source_img = $sourcefolder;
