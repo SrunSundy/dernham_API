@@ -117,7 +117,7 @@ class UserModel extends CI_Model{
 		return $query->row();
 	}
 	
-	function getUserProfileFollow($request){
+	function getUserProfileIsFollowed($request){
 		$sql = "SELECT count(*) as is_followed
 				FROM nham_user_follow u
 				WHERE u.follower_id = ? and u.following_id = ? LIMIT 1";
@@ -125,7 +125,7 @@ class UserModel extends CI_Model{
 		$param["follower_id"] = $request["follower_id"];
 		$param["following_id"] = $request["following_id"];
 		$query = $this->db->query($sql , $param);
-		return $query->row()->is_followed;
+		return ($query->row()->is_followed) == 0 ? false : true ;
 	}
 	
 	function updateUserProfileData($request){
@@ -160,6 +160,38 @@ class UserModel extends CI_Model{
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;	
 	}
+	
+	function getNumberFollower($request){
+		$sql = "SELECT count(*) 
+				FROM nham_user_follow u
+				WHERE u.following_id = ?";
+		
+		$param["follower_id"] = $request["follower_id"];
+		$query = $this->db->query($sql , $param);
+		return ($query->row());
+	}
+	
+	function getNumberFollowing($request){
+		$sql = "SELECT count(*)
+				FROM nham_user_follow u
+				WHERE u.follower_id = ?";
+		
+		$param["follower_id"] = $request["follower_id"];
+		$query = $this->db->query($sql , $param);
+		return ($query->row());
+	}
+	
+	function getNumberPost($request){
+		$sql = "SELECT count(*)
+				FROM nham_user_post u
+				WHERE u.user_id = ?";
+		
+		$param["follower_id"] = $request["follower_id"];
+		$query = $this->db->query($sql , $param);
+		return ($query->row());
+	}
+	
+	
 	
 	
 }

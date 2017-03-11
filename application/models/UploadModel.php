@@ -16,9 +16,9 @@ class UploadModel extends CI_Model{
 		{
 				
 			$new_name = $new_name_file.".jpg";
-			$target_small_dir = "./uploadimages/user/";
-			$target_medium_dir = "./uploadimages/user/";
-			$target_big_dir = "./uploadimages/user/";
+			$target_small_dir = "./uploadimages/user/small/";
+			$target_medium_dir = "./uploadimages/user/medium/";
+			$target_big_dir = "./uploadimages/user/big/";
 		
 			$checkdirectory_small = $this->checkDirectory($target_small_dir);
 			$checkdirectory_medium = $this->checkDirectory($target_medium_dir);
@@ -58,9 +58,9 @@ class UploadModel extends CI_Model{
 				if($width < 960){
 					$imgsize = $width;
 				}
-				$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $_FILES["file"]["tmp_name"], $imgsize, 80);
-				$medium = $this->resizeImageFixpixel($target_medium_dir.$new_name, $_FILES["file"]["tmp_name"] , 180 , 80);									
-				$small = $this->resizeImageFixpixel($target_medium_dir.$new_name, $_FILES["file"]["tmp_name"], 50, 80);
+				$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $file ["file"]["tmp_name"], $imgsize, 80);
+				$medium = $this->resizeImageFixpixel($target_medium_dir.$new_name, $file ["file"]["tmp_name"] , 180 , 80);									
+				$small = $this->resizeImageFixpixel($target_small_dir.$new_name, $file ["file"]["tmp_name"], 50, 80);
 				
 				$errorupload = false;
 				array_push($isuploadimg, $big, $medium, $small);
@@ -85,8 +85,8 @@ class UploadModel extends CI_Model{
 			$response['is_upload']= false;
 			$response["message"] = "No File!";
 		}
-		$json = json_encode($response);
-		echo $json;
+		//$json = json_encode($response);
+		return $response;
 	}
 	
 	

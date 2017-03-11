@@ -257,9 +257,18 @@ class UserRestController extends REST_Controller{
 	
 	
 	
-	function update_user_photo_post(){
+	function updateuserphoto_post(){
 		
+		/*{
+			"data" :{
+				"user_id" : 38
+			}
+		}*/
+		
+		$response = array();
 		$new_name = $this->generateRandomString(10);
+		
+		$update_data = json_decode($_POST["data"]);
 		
 		$this->load->model("UploadModel");
 		$request_upload["image_file"] = $_FILES;
@@ -267,18 +276,29 @@ class UserRestController extends REST_Controller{
 		
 		$send = $this->UploadModel->uploadUserPhoto($request_upload);
 		
-		$this->response($send ,200);
+		if($send["is_upload"]){
+			$request_data["update_param"] = "user_photo";
+			$request_data["update_value"] = $send["filename"];
+			$request_data["user_id"] = $update_data->user_id;
+			$data = $this->UserModel->updateUserProfileData($request_data);		
+			if($data){
+				$response["response_code"] = "200";
+				$response["response_data"] = $send["filename"];
+				$this->response($response,200);
+			}else{
+				$response["response_code"] = "000";
+				$response["response_msg"] = "error update data";
+				$this->response($response,200);
+			}
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = $send["message"];
+			$this->response($response,200);
+		}
 		
-		//$request_data["update_param"] = "user_photo";
-		//$request_data["update_value"] = "sssssssssssssssss.jpg";
-		//$request_data["user_id"] = 38;
-		//$data = $this->UserModel->updateUserProfileData($request_data);
 		
-		//if($data){
-			
-		//}else{
-			//echo "Error update";
-		//}
+		
+		
 		
 	}
 	
