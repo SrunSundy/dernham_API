@@ -7,7 +7,7 @@ class PostModel extends CI_Model{
 		$this->load->database();
 	}
 	
-	function userPost( $request ){
+	function insertUserPost( $request ){
 	
 		$sql = "INSERT INTO nham_user_post(
 				post_caption, 
@@ -21,10 +21,11 @@ class PostModel extends CI_Model{
 		$param["user_id"] = $request["user_id"];
 		
 		
-		$query = $this->db->query($sql , $param);
-		
-		return ($this->db->affected_rows() != 1) ? false : true;
+		$query = $this->db->query($sql , $param);			
+	    $inserted_id = $this->db->insert_id();		
+		return $inserted_id;
 	}
+	
 	
 	function updateUserPost( $request ){
 		
