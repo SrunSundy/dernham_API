@@ -266,7 +266,16 @@ class UserRestController extends REST_Controller{
 		}*/
 		
 		$response = array();
-		$new_name = $this->generateRandomString(10);
+		
+		$this->load->helper('dernhamutils');
+		$new_name = generateRandomString(10);
+		
+		if (empty($_FILES) || empty($_POST["data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
 		
 		$update_data = json_decode($_POST["data"]);
 		
@@ -303,16 +312,6 @@ class UserRestController extends REST_Controller{
 	}
 	
 	
-	
-	function generateRandomString($length) {
-		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		$charactersLength = strlen($characters);
-		$randomString = '';
-		for ($i = 0; $i < $length; $i++) {
-			$randomString .= $characters[rand(0, $charactersLength - 1)];
-		}
-		return $randomString.time();
-	}
 	
 	function get_user_profile_post(){
 		$request = json_decode($this->input->raw_input_stream,true);
