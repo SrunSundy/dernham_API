@@ -4,7 +4,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 // This can be removed if you use __autoload() in config.php OR use Modular Extensions
 require APPPATH . '/libraries/REST_Controller.php';
 
-class UploadRestController extends REST_Controller{	
+class UploadEncodeRestController extends REST_Controller{	
 	public function __construct() {
 		
 		parent::__construct();
@@ -20,17 +20,27 @@ class UploadRestController extends REST_Controller{
 		
 		$response = array();
 		
-		if (empty($_FILES)){
-			$response["response_code"] = "400";
-			$response["error"] = "bad request";
-			$this->response($response, 400);
-			die();
-		}
-			
-		$request_upload["image_file"] = $_FILES;
-		$upload_target = "./uploadimages/temp/";		
-		$response_data = $this->UploadModel->uploadMutilplePostImages($request_upload, $upload_target);
+		$request = json_decode($this->input->raw_input_stream,true);
+		$request = $request["request_data"];
 		
+		$imageData = $request["image_data"];
+		
+		$data = explode(',',$imageData);
+		 
+		$output_file = base64_decode($data[1]);
+		 
+		// $imagesize = getimagesizefromstring($output_file);
+		
+		$source = @imagecreatefromstring($output_file);
+		
+		// $uri = 'data://application/octet-stream;base64,' . $data[1];
+		 
+		//$this->response( strlen(base64_decode($data[1])) , 200); 
+			
+		 $request_upload["image_file"] = $source;
+		$upload_target = "./uploadimages/temp/";		
+		$response_data = $this->UploadModel->test($request_upload, $upload_target);
+		/*
 		if($response_data["is_upload"]){
 			$response["response_code"] = "200";
 			$response["response_msg"] = $response_data["message"];
@@ -41,7 +51,7 @@ class UploadRestController extends REST_Controller{
 			$response["response_msg"] = $response_data["message"];
 			$response["response_data"] = $response_data["fileupload"];
 			$this->response($response, 200);
-		}
+		}   */
 		
 	}
 	
