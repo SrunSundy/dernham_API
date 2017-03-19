@@ -40,6 +40,31 @@ class UploadEncodeRestController extends REST_Controller{
 		
 	}
 	
+	function uploaduserphoto_post(){
+		
+		$response = array();
+		$request = json_decode($this->input->raw_input_stream,true);
+		$request = $request["request_data"];
+		$request_data["image_data"] = $request["image_data"];
+
+		$request_data["target_file"] = "./uploadimages/user/";
+		$response_data = $this->UploadEncodeModel->uploadSingleImage($request_data);
+		
+		if($request_data["is_upload"]){
+			$response["response_code"] = "200";
+			$response["response_msg"] = $response_data["message"];
+			$response["response_data"] = $response_data["fileupload"];
+			$this->response($response, 200);
+			
+		}else{
+			
+			$response["response_code"] = "000";
+			$response["response_msg"] = $response_data["message"];
+			$response["response_data"] = $response_data["fileupload"];
+			$this->response($response, 200);
+		}
+	}
+	
 	
 }
 ?>

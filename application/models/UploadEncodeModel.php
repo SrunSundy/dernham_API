@@ -6,7 +6,7 @@ class UploadEncodeModel extends CI_Model{
 		parent::__construct();		
 	}
 	
-	function test( $request){
+	function uploadSingleImage( $request){
 	
 		$response = array();	
 		$files = $request["image_data"];
