@@ -26,6 +26,57 @@ class PostModel extends CI_Model{
 		return $inserted_id;
 	}
 	
+	function listUserPost( $request ){
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
+		$sql = "SELECT
+					p.post_id,
+					p.post_caption,
+					p.post_created_date,
+					p.shop_id,
+					s.shop_name_en,
+					s.shop_name_kh,
+					s.shop_address,
+					s.shop_status,
+					p.user_id,
+					u.user_fullname,
+					u.user_photo,
+					u.user_status,
+					p.post_count_view,
+					p.post_count_share					
+				FROM nham_user_post p
+				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
+				LEFT JOIN nham_user u ON p.user_id = u.user_id
+				WHERE p.post_status = 1
+				ORDER BY p.post_id DESC ";
+		
+		$query_record = $this->db->query($sql);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= "LIMIT ? OFFSET ?";
+		array_push($param, $limit , $offset);
+		$query = $this->db->query($sql, $param);
+		
+		$response["response_data"] = $query->result();
+		return $response;
+	}
+	
 	
 	function updateUserPost( $request ){
 		
@@ -66,10 +117,14 @@ class PostModel extends CI_Model{
 	}
 	
 	function viewLikers( $request ){
-	$sql = "SELECT user_id, 
-		user_fullname, 
-		user_photo, 
-		user_quote FROM nham_user WHERE user_id in (SELECT user_id FROM nham_user_like WHERE post_id = ?)" ;
+	$sql = "SELECT u.user_id, 
+		u.user_fullname, 
+		u.user_photo, 
+		u.user_quote,
+		(SELECT count(*) FROM nham_user_follow WHERE follower_id = ? AND following_id = u.user_id  ) as followed
+		FROM nham_user u
+		WHERE u.user_id in (SELECT user_id FROM nham_user_like WHERE post_id = ?)" ;
+		$param["user_id"] = $request["user_id"];
 		$param["post_id"] = $request["post_id"];
 		$query = $this->db->query($sql , $param);
 		return $query->result();

@@ -217,6 +217,48 @@ class PostRestController extends REST_Controller{
 		}
 	}
 	
+	function listuserpost_get(){
+		
+		//row=20&
+		//page=2
+		
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');
+		
+		$responsequery = $this->PostModel->listUserPost($request);
+		
+		$response["response_code"] = "200";
+		$response["total_record"] = $responsequery["total_record"];
+		$response["total_page"] = $responsequery["total_page"];
+		
+		$response_data = $responsequery["response_data"];
+		
+		if(count($response_data) > 0){
+			foreach($response_data as $item){					
+				$request_com["post_id"] = $item->post_id;
+				$this->load->model("CommentModel");
+				$item->comment_count = $this->CommentModel->countCommentByPostid($request_com)->count;
+				
+				$request_pimg["post_id"] = $item->post_id;
+				$request_pimg["row"] = 9999999999;
+				$request_pimg["page"] = 1;
+				$this->load->model("PostImageModel");
+				$item->post_img = $this->PostImageModel->listUserPostImageByPostid($request_pimg)["response_data"];
+				
+				$request_dcom["post_id"] = $item->post_id;
+				$request_dcom["row"] = 1;
+				$request_dcom["page"] = 1;
+				$request_dcom["order_type"]= 1;
+				$item->comment_item = $this->CommentModel->listCommentByPostId($request_dcom)["response_data"];
+				$item->like_count = $this->PostModel->countLike($request_com)->count;
+			}
+		}
+		
+		$response["response_data"] = $response_data;
+		$this->response($response, 200);
+		
+	}
+	
 }
 
 ?>
