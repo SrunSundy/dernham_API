@@ -421,6 +421,42 @@ class ShopModel extends CI_Model{
 		
 	}
 	
+	function insertShop($request){
+		
+		
+		$sql = "INSERT INTO nham_shop(
+					shop_name_en,
+					shop_name_kh,
+					shop_logo,
+					country_id,
+					city_id,
+					district_id,
+					commune_id,
+					shop_address,
+					shop_opening_time,
+					shop_close_time,
+					shop_status,
+					shop_time_zone,
+					shop_lat_point,
+					shop_lng_point
+				)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+		$param["shop_name_en"] = $request["shop_name_en"];
+		$param["shop_name_kh"] = $request["shop_name_kh"];
+		$param["shop_logo"] = $request["shop_logo"];
+		$param["country_id"] = $request["country_id"];
+		$param["city_id"] = $request["city_id"];
+		$param["district_id"] = $request["district_id"];
+		$param["commune_id"] = $request["commune_id"];
+		$param["shop_address"] = $request["shop_address"];
+		$param["shop_opening_time"] = $request["shop_opening_time"];
+		$param["shop_close_time"] = $request["shop_close_time"];
+		$param["shop_status"] = $request["shop_status"];
+		$param["shop_time_zone"] = (!isset($request["shop_time_zone"])) ? "Asia/Phnom_Penh" : $request["shop_time_zone"];
+		$param["shop_lat_point"] = $request["shop_lat_point"];
+		$param["shop_lng_point"] = $request["shop_lng_point"];
+		$query = $this->db->query($sql , $param);		
+		return ($this->db->affected_rows() != 1) ? false : true;
+	}
 	
 	
 	

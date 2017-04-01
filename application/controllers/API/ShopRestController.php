@@ -449,5 +449,74 @@ class ShopRestController extends REST_Controller{
 		$this->response($response, 200);
 	}
 	
+	public function createshop_post(){
+		
+		/* {
+		 "request_data" : {
+			"country_id" : 1,
+			"city_id": 1,
+			"district_id": 1,
+			"commune_id" : 1,
+			"shop_address": "phnom penh , cambodia",
+			"shop_name_en" : "test",
+			"shop_name_kh" : "test",
+			"shop_logo" : "1.jpg",
+			"shop_time_zone": "Asia/Phnom_Penh",
+			"shop_opening_time" : "9:00",
+			"shop_close_time" : "20:00",
+			"shop_lat_point" : 11.565723328439192,
+			"shop_lng_point" : 104.88913536071777
+			"serve_categories" : [
+				"1","2"
+			}
+		}
+		} */
+		
+		$this->db->trans_begin();
+		$response = array();
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		$request["shop_status"] = "2";
+		$isInsert = $this->ShopModel->insertShop($request);
+		$insert_shop_id = $this->db->insert_id();
+		
+		if($isInsert){
+			
+			$req_cate["shop_id"] = $insert_shop_id;
+			$req_cate["serve_categories"] = $request["serve_categories"];
+			$this->load->model('ShopCategoryMapModel');
+			$isInsert_cate = $this->ShopCategoryMapModel->insertShopServeCategory($req_cate);
+		
+			if ($this->db->trans_status() === FALSE)
+			{
+				$this->db->trans_rollback();
+				$response["response_code"] = "000";
+				$response["response_msg"] = "Transaction rollback!";
+			}
+			else
+			{
+				$this->db->trans_commit();
+				$response["response_code"] = "200";
+				$response["response_msg"] = "success";
+			}
+			
+		}else{
+			
+			$response["response_code"] = "000";
+			$response["response_code"] = "Error ! Fail to insert.";
+		}
+		
+		
+		$this->response($response, 200);
+		
+	}
+	
 }
 ?>
