@@ -413,6 +413,37 @@ class UserRestController extends REST_Controller{
 		}
 	}
 	
+	function get_profile_subinfo_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+		if(!isset($request["profile_id"]) || IsNullOrEmptyString($request["profile_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$follower = $this->UserModel->getNumberFollower($request);
+		$following = $this->UserModel->getNumberFollowing($request);
+		$post = $this->UserModel->getNumberPost($request);
+		
+		$response["response_code"] = "200";
+			$response["response_msg"] = "request successfully";
+			$response["followers"] = $follower;
+			$response["followings"] = $following;
+			$response["posts"] = $post;
+			$this->response($response ,200);
+	}
+	
 }
 
 ?>

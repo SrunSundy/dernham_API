@@ -220,7 +220,8 @@ class PostRestController extends REST_Controller{
 	function listuserpost_get(){
 		
 		//row=20&
-		//page=2
+		//page=2&
+		//user_id
 		
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');
@@ -251,12 +252,154 @@ class PostRestController extends REST_Controller{
 				$request_dcom["order_type"]= 1;
 				$item->comment_item = $this->CommentModel->listCommentByPostId($request_dcom)["response_data"];
 				$item->like_count = $this->PostModel->countLike($request_com)->count;
+				
+				$request_islike["post_id"] = $item->post_id;
+				$request_islike["user_id"] = $this->input->get("user_id");
+				$item->is_liked = $this->PostModel->isUserLiked($request_islike)->is_liked;
 			}
 		}
 		
 		$response["response_data"] = $response_data;
 		$this->response($response, 200);
 		
+	}
+	
+	function listprofilepost_get(){
+		
+		//row=20&
+		//page=2
+		
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');
+		$request["profile_id"] = $this->input->get('profile_id');
+		
+		$responsequery = $this->PostModel->listProfilePost($request);
+		
+		$response["response_code"] = "200";
+		$response["total_record"] = $responsequery["total_record"];
+		$response["total_page"] = $responsequery["total_page"];
+		
+		$response_data = $responsequery["response_data"];
+		
+		if(count($response_data) > 0){
+			foreach($response_data as $item){					
+				$request_com["post_id"] = $item->post_id;
+				$this->load->model("CommentModel");
+				$item->comment_count = $this->CommentModel->countCommentByPostid($request_com)->count;
+				
+				$request_pimg["post_id"] = $item->post_id;
+				$request_pimg["row"] = 9999999999;
+				$request_pimg["page"] = 1;
+				$this->load->model("PostImageModel");
+				$item->post_img = $this->PostImageModel->listUserPostImageByPostid($request_pimg)["response_data"];
+				
+				$request_dcom["post_id"] = $item->post_id;
+				$request_dcom["row"] = 1;
+				$request_dcom["page"] = 1;
+				$request_dcom["order_type"]= 1;
+				$item->comment_item = $this->CommentModel->listCommentByPostId($request_dcom)["response_data"];
+				$item->like_count = $this->PostModel->countLike($request_com)->count;
+				
+				$request_islike["post_id"] = $item->post_id;
+				$request_islike["user_id"] = $this->input->get("user_id");
+				$item->is_liked = $this->PostModel->isUserLiked($request_islike)->is_liked;
+			}
+		}
+		
+		$response["response_data"] = $response_data;
+		$this->response($response, 200);
+		
+	}
+	
+	function list_profile_postimage_get(){
+		
+		//row=20&
+		//page=2
+		
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');
+		$request["profile_id"] = $this->input->get('profile_id');
+		
+		$responsequery = $this->PostModel->listProfilePostImages($request);
+		
+		$response["response_code"] = "200";
+		$response["total_record"] = $responsequery["total_record"];
+		$response["total_page"] = $responsequery["total_page"];
+		
+		$response_data = $responsequery["response_data"];
+		
+		
+		$response["response_data"] = $response_data;
+		$this->response($response, 200);
+		
+	}
+	
+	function view_comment_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		
+		$this->load->helper('validate');
+		if(!isset($request["post_id"]) || IsNullOrEmptyString($request["post_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$data = $this->PostModel->viewComment($request);
+		
+		if($data){
+			$response["response_data"] = $data;
+			$response["response_code"] = "200";
+			$response["response_msg"] = "view succeed!";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "view failed!";
+			$this->response($response ,200);
+		}
+	}
+	
+	function user_comment_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		
+		$this->load->helper('validate');
+		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
+			!isset($request["post_id"]) || IsNullOrEmptyString($request["post_id"]) ||
+			!isset($request["text"]) || IsNullOrEmptyString($request["text"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+
+		$data = $this->PostModel->userComment($request);
+		if($data){
+			//$data1 = $this->PostModel->countLike($request);
+			//$response["response_data"] = $data1;
+			$response["response_code"] = "200";
+			$response["response_msg"] = "comment successfully!";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "comment failed!";
+			$this->response($response ,200);
+		}
 	}
 	
 }
