@@ -77,6 +77,17 @@ class PostModel extends CI_Model{
 		return $response;
 	}
 	
+	function isUserLiked( $request ){
+		
+		$sql = "SELECT count(*) AS is_liked
+			FROM nham_user_like WHERE post_id = ? AND user_id = ?";
+			
+		$param["post_id"] = $request["post_id"];
+		$param["user_id"] = $request["user_id"]; 
+		$query = $this->db->query($sql, $param);
+		return $query->row();
+	}
+	
 	
 	function updateUserPost( $request ){
 		
@@ -128,6 +139,122 @@ class PostModel extends CI_Model{
 		$param["post_id"] = $request["post_id"];
 		$query = $this->db->query($sql , $param);
 		return $query->result();
+	}
+	
+	function viewComment( $request ){
+	$sql = "SELECT com.id,
+		com.text,
+		com.created_date,
+		u.user_id,
+		u.user_photo,
+		u.user_fullname FROM nham_comment com
+		LEFT JOIN nham_user u ON u.user_id = com.user_id
+		WHERE com.post_id = ? AND com.status =1 ORDER BY com.id  " ;
+		$param["post_id"] = $request["post_id"];
+		$query = $this->db->query($sql , $param);
+		return $query->result();
+	}
+	
+	function userComment( $request ){
+	$sql = "INSERT INTO nham_comment(user_id, post_id, text) values(?, ?, ?)" ;
+		$param["user_id"] = $request["user_id"];
+		$param["post_id"] = $request["post_id"];
+		$param["text"] = $request["text"];
+		$query = $this->db->query($sql , $param);
+		return ($this->db->affected_rows() != 1) ? false : true;
+	}
+	
+	function listProfilePost( $request ){
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		$profile_id = $request["profile_id"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
+		$sql = "SELECT
+					p.post_id,
+					p.post_caption,
+					p.post_created_date,
+					p.shop_id,
+					s.shop_name_en,
+					s.shop_name_kh,
+					s.shop_address,
+					s.shop_status,
+					p.user_id,
+					u.user_fullname,
+					u.user_photo,
+					u.user_status,
+					p.post_count_view,
+					p.post_count_share					
+				FROM nham_user_post p
+				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
+				LEFT JOIN nham_user u ON p.user_id = u.user_id
+				WHERE p.post_status = 1 and p.user_id = ?
+				ORDER BY p.post_id DESC ";
+		
+		$query_record = $this->db->query($sql, $profile_id);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= "LIMIT ? OFFSET ?";
+		array_push($param, $profile_id, $limit , $offset);
+		$query = $this->db->query($sql, $param);
+		
+		$response["response_data"] = $query->result();
+		return $response;
+	}
+	
+	function listProfilePostImages( $request ){
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		$profile_id = $request["profile_id"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
+		$sql = "SELECT
+					p.post_id,
+					p.post_caption,
+					p.post_created_date,
+					pi.post_image_src				
+				FROM nham_user_post p
+				LEFT JOIN nham_user_post_image pi ON p.post_id = pi.post_id
+				WHERE p.post_status = 1 and p.user_id = ?
+				ORDER BY p.post_id DESC ";
+		
+		$query_record = $this->db->query($sql, $profile_id);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= "LIMIT ? OFFSET ?";
+		array_push($param, $profile_id, $limit , $offset);
+		$query = $this->db->query($sql, $param);
+		
+		$response["response_data"] = $query->result();
+		return $response;
 	}
 	
 }

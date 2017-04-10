@@ -59,30 +59,55 @@ class UserModel extends CI_Model{
 	
 	
 	function checkIfFBUserExist($request){
-		$sql = "SELECT u.user_status
+		$sql = "SELECT 	u.user_id,
+					u.user_email,
+					u.user_fullname,
+					u.user_gender,
+					u.user_photo,
+					u.user_quote,
+					u.user_interest,
+					u.user_phone,
+					u.user_status
 					FROM nham_user u
 					WHERE u.type = 1 and u.fbid=? LIMIT 1";
 		
 		$param["fbid"] = $request["fbid"];
-		
 		$query = $this->db->query($sql , $param);		
 		return $query->row();
 	}
 	
+	function getUserByUserId($request){
+		$sql = "SELECT 	u.user_id,
+					u.user_email,
+					u.user_fullname,
+					u.user_gender,
+					u.user_photo,
+					u.user_quote,
+					u.user_interest,
+					u.user_phone,
+					u.user_status
+					FROM nham_user u
+					WHERE u.user_id = ? LIMIT 1";
+		$param["user_id"] = $request["user_id"];
+		$query = $this->db->query($sql , $param);
+		return $query->row();
+	}
+	
 	function registerFBUser($request){
-		$sql = "INSERT INTO nham_user(user_fullname, user_email, gender, user_password, user_verification_code, type, fbid) VALUES(?, ?, ?, ?, ?, ?, ?)";
+		$sql = "INSERT INTO nham_user(user_fullname, user_email, user_gender, user_password, user_verification_code, type, fbid) VALUES(?, ?, ?, ?, ?, ?, ?)";
 		$param["fullname"] = $request["fullname"];
-		$param["email"] = isset($request["email"]) ? $request["email"] : "";
-		$param["gender"] = isset($request["gender"]) ? $request["gender"] : "";
-		$param["password"] = "";
-		$param["verification_code"] = "";
+		$param["email"] = ($request["email"] != "") ? $request["email"] : "N/A";
+		$param["gender"] = ($request["gender"] != "") ? $request["gender"] : "N/A";
+		$param["password"] = "N/A";
+		$param["verification_code"] = "N/A";
 		$param["type"] = 1; //0 normal login & 1 login as fb
 		$param["fbid"] = $request["fbid"];
 		
 		$query = $this->db->query($sql , $param);
-		
-		return ($this->db->affected_rows() != 1) ? false : true;
-		
+		if($this->db->affected_rows() != 1)
+			return 0;
+		$req["user_id"]=$this->db->insert_id();
+		return $this->UserModel->getUserByUserId($req);
 	}
 	
 	function updateUserProfile($request){
@@ -92,7 +117,7 @@ class UserModel extends CI_Model{
 		$param["gender"] = isset($request["gender"]) ? $request["gender"] : "";
 		$param["quote"] = isset($request["quote"]) ? $request["quote"] : "";
 		$param["phone"] = isset($request["phone"]) ? $request["phone"] : "";
-		$param["id"] = $request["id"];
+		$param["profile_id"] = $request["profile_id"];
 		
 		$query = $this->db->query($sql , $param);
 		
@@ -112,7 +137,7 @@ class UserModel extends CI_Model{
 				FROM nham_user u
 				WHERE u.user_id = ? LIMIT 1";
 		
-		$param["user_id"] = $request["following_id"];
+		$param["profile_id"] = $request["profile_id"];
 		$query = $this->db->query($sql , $param);
 		return $query->row();
 	}
@@ -122,8 +147,8 @@ class UserModel extends CI_Model{
 				FROM nham_user_follow u
 				WHERE u.follower_id = ? and u.following_id = ? LIMIT 1";
 		
-		$param["follower_id"] = $request["follower_id"];
-		$param["following_id"] = $request["following_id"];
+		$param["user_id"] = $request["user_id"];
+		$param["profile_id"] = $request["profile_id"];
 		$query = $this->db->query($sql , $param);
 		return ($query->row()->is_followed) == 0 ? false : true ;
 	}
@@ -143,8 +168,8 @@ class UserModel extends CI_Model{
 	
 	function reqUserUnfollow($request){
 		$sql = "DELETE from nham_user_follow where follower_id = ? and following_id = ?";
-		$param["follower_id"] = $request["follower_id"];
-		$param["following_id"] = $request["following_id"];
+		$param["user_id"] = $request["user_id"];
+		$param["profile_id"] = $request["profile_id"];
 		
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;
@@ -154,41 +179,41 @@ class UserModel extends CI_Model{
 	function reqUserFollow($request){
 	
 		$sql = "INSERT INTO nham_user_follow(follower_id, following_id) VALUES(?, ?)";
-		$param["follower_id"] = $request["follower_id"];
-		$param["following_id"] = $request["following_id"];
+		$param["user_id"] = $request["user_id"];
+		$param["profile_id"] = $request["profile_id"];
 		
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;	
 	}
 	
 	function getNumberFollower($request){
-		$sql = "SELECT count(*) 
+		$sql = "SELECT count(*) as count
 				FROM nham_user_follow u
 				WHERE u.following_id = ?";
 		
-		$param["follower_id"] = $request["follower_id"];
+		$param["profile_id"] = $request["profile_id"];
 		$query = $this->db->query($sql , $param);
-		return ($query->row());
+		return ($query->row()->count);
 	}
 	
 	function getNumberFollowing($request){
-		$sql = "SELECT count(*)
+		$sql = "SELECT count(*) as count
 				FROM nham_user_follow u
 				WHERE u.follower_id = ?";
 		
-		$param["follower_id"] = $request["follower_id"];
+		$param["profile_id"] = $request["profile_id"];
 		$query = $this->db->query($sql , $param);
-		return ($query->row());
+		return ($query->row()->count);
 	}
 	
 	function getNumberPost($request){
-		$sql = "SELECT count(*)
+		$sql = "SELECT count(*) as count
 				FROM nham_user_post u
 				WHERE u.user_id = ?";
 		
-		$param["follower_id"] = $request["follower_id"];
+		$param["profile_id"] = $request["profile_id"];
 		$query = $this->db->query($sql , $param);
-		return ($query->row());
+		return ($query->row()->count);
 	}
 	
 	
