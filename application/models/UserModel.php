@@ -56,6 +56,35 @@ class UserModel extends CI_Model{
 		return $query->row();
 	}
 	
+	function getUserToVerify($request){
+		
+		$sql = " SELECT user_status 
+					 FROM nham_user
+					 WHERE user_email = ?
+					 AND user_verification_code = ? ";
+		
+		$param["email"] = $request["email"];
+		$param["v_code"] = $request["v_code"];
+		
+		$query = $this->db->query($sql , $param);
+		return $query->result();
+	}
+	
+	function verifyUser($request){
+		
+		$sql = " UPDATE nham_user SET user_status = ?
+					 WHERE user_email = ?
+					 AND user_verification_code = ? ";
+		
+		$this->load->helper('userstatus');
+		$param["user_status"] = userstatus::Active;
+		$param["email"] = $request["email"];
+		$param["v_code"] = $request["v_code"];
+		
+		$query = $this->db->query($sql , $param);
+		return $query;
+	}
+	
 	
 	
 	function checkIfFBUserExist($request){

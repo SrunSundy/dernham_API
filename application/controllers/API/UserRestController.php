@@ -114,7 +114,7 @@ class UserRestController extends REST_Controller{
 	function verifyuser_get(){
 		
 		//email -- store in service 
-		//v_code=
+		//v_code
 		$request["email"] = $this->input->get('email');
 		$request["v_code"] = $this->input->get('v_code');
 		
@@ -134,19 +134,49 @@ class UserRestController extends REST_Controller{
 		}
 		
 		$data = $this->UserModel->getUserToVerify($request);
+		$has_user = count($data);
 		
-		if((int)$data->verify >= 1){
+		if($has_user >= 1){
 			
-			$response["response_code"] ==" 200";
-			$response["response_msg"] == "verify successfully.";
-			$response["response_data"] == true;
-			$this->response($response, 200);
+			$user_status = $data[0]->user_status;
+			$this->load->helper('userstatus');
+			
+			switch((int)$user_status){
+				case userstatus::Disabled : {
+					$response["response_code"] = "000";
+					$response["response_msg"] = "verification fails. user is disabled!";
+					$response["response_data"] = false;
+					$this->response($response, 200);
+					break;
+				}
+				case userstatus::Active :{
+					$response["response_code"] = "200";
+					$response["response_msg"] = "user is already active!";
+					$response["response_data"] = false;
+					$this->response($response, 200);
+					break;
+				}
+				case userstatus::Unauthorized :{
+					
+					$data = $this->UserModel->verifyUser($request);
+					
+					if($data){
+						$response["response_code"] = "200";
+						$response["response_msg"] = "verify successfully.";
+						$response["response_data"] = true;
+						$this->response($response, 200);
+					}
+					
+					break;
+				}
+			}
+			
 		}else{
-			$response["response_code"] ==" 200";
-			$response["response_msg"] == "verify fails. your verification code might be incorrect or expired ";
-			$response["response_data"] == false;
+			$response["response_code"] ="200";
+			$response["response_msg"] = "verification fails. your verification code might be incorrect or expired ";
+			$response["response_data"] = false;
 			$this->response($response, 200);
-		}
+		} 
 		
 	}
 	
