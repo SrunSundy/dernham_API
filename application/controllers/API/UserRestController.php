@@ -370,6 +370,7 @@ class UserRestController extends REST_Controller{
 			$response["response_code"] = "000";
 			$response["response_msg"] = $send["message"];
 			$this->response($response,200);
+			
 		}	
 	}	
 	
