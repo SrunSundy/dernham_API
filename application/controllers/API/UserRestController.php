@@ -370,14 +370,8 @@ class UserRestController extends REST_Controller{
 			$response["response_code"] = "000";
 			$response["response_msg"] = $send["message"];
 			$this->response($response,200);
-		}
-		
-		
-		
-		
-		
-	}
-	
+		}	
+	}	
 	
 	
 	function get_user_profile_post(){
