@@ -108,9 +108,46 @@ class UserRestController extends REST_Controller{
 				$this->response($response ,200);
 			}
 		}
+				
+	}
+	
+	function verifyuser_get(){
 		
+		//email -- store in service 
+		//v_code=
+		$request["email"] = $this->input->get('email');
+		$request["v_code"] = $this->input->get('v_code');
 		
+		$this->load->helper('validate');
+		if(!isset($request["email"]) || IsNullOrEmptyString($request["email"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request. email is required!";
+			$this->response($response, 400);
+			die();
+		}
+		
+		if(!isset($request["v_code"]) || IsNullOrEmptyString($request["v_code"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request. v_code is required!";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$data = $this->UserModel->getUserToVerify($request);
+		
+		if((int)$data->verify >= 1){
 			
+			$response["response_code"] ==" 200";
+			$response["response_msg"] == "verify successfully.";
+			$response["response_data"] == true;
+			$this->response($response, 200);
+		}else{
+			$response["response_code"] ==" 200";
+			$response["response_msg"] == "verify fails. your verification code might be incorrect or expired ";
+			$response["response_data"] == false;
+			$this->response($response, 200);
+		}
+		
 	}
 	
 	function loginuser_post(){
