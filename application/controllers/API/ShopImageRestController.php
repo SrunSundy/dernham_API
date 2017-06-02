@@ -59,7 +59,7 @@ class ShopImageRestController extends REST_Controller{
 		}
 		
 		
-		$this->load->helper('imagetype');
+		//$this->load->helper('imagetype');
 		
 		$response_data = $this->ShopImageModel->listShopDetailImgByShopid($request);		
 		$response_count = $this->ShopImageModel->countListShopDetailImgByShopid($request);
