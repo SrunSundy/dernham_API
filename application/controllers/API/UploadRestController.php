@@ -34,6 +34,8 @@ class UploadRestController extends REST_Controller{
 			$response["response_code"] = "200";
 			$response["response_msg"] = $response_data["message"];
 			$response["response_data"] = $response_data["filename"];
+			
+		
 			$this->response($response, 200);
 		}else{
 			$response["response_code"] = "000";
@@ -69,7 +71,34 @@ class UploadRestController extends REST_Controller{
 			$response["response_data"] = $response_data["fileupload"];
 			$this->response($response, 200);
 		}
+	}
+	
+	function upload_profile_photo_totemp_post(){
+		$response = array();
 		
+		if (empty($_FILES)){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+			
+		$request_upload["image_file"] = $_FILES;
+		$upload_target = "./uploadimages/user/";
+		$response_data = $this->UploadModel->uploadUserPhoto($request_upload, $upload_target);
+		
+		if($response_data["is_upload"]){
+			$response["response_code"] = "200";
+			$response["response_msg"] = $response_data["message"];
+			$response["response_data"] = $response_data["filename"];
+			
+			$this->response($response, 200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = $response_data["message"];
+			$response["response_data"] = $response_data["filename"];
+			$this->response($response, 200);
+		}
 	}
 	
 	

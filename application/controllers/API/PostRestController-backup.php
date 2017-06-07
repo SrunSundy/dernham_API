@@ -2,23 +2,7 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 // This can be removed if you use __autoload() in config.php OR use Modular Extensions
-
 require APPPATH . '/libraries/REST_Controller.php';
-
-// push notification
-
-require_once $_SERVER['DOCUMENT_ROOT'].'/plugin/push_notification/vendor/autoload.php';
-
-use Sly\NotificationPusher\PushManager,
-    Sly\NotificationPusher\Adapter\Gcm as GcmAdapter,
-    Sly\NotificationPusher\Collection\DeviceCollection,
-    Sly\NotificationPusher\Model\Device,
-    Sly\NotificationPusher\Model\Message,
-    Sly\NotificationPusher\Model\Push
-;
-
-
-//==========end notification=========
 
 class PostRestController extends REST_Controller{
 	
@@ -136,7 +120,6 @@ class PostRestController extends REST_Controller{
 	function user_like_post(){
 		$request = json_decode($this->input->raw_input_stream,true);
 		
-		
 		if(!isset($request["request_data"])){
 			$response["response_code"] = "400";
 			$response["error"] = "bad request";
@@ -157,11 +140,6 @@ class PostRestController extends REST_Controller{
 		$data = $this->PostModel->userLike($request);
 		if($data){
 			$data1 = $this->PostModel->countLike($request);
-			
-			//insert into notification tb
-			$request["object_id"]=$request["post_id"];
-			$request["action_id"]=1; //1 = like, 2 = comment, 3 = follow
-			$notify = $this->PostModel->notifyUser($request);
 	
 			$response["response_data"] = $data1;
 			$response["response_code"] = "200";
@@ -440,18 +418,8 @@ class PostRestController extends REST_Controller{
 		}
 
 		$data = $this->PostModel->userComment($request);
-		if($data){
+		if($data){			
 		
-			//insert into notification tb
-			$request["object_id"]=$request["post_id"];
-			$request["action_id"]=2; //1 = like, 2 = comment, 3 = follow
-			$notify = $this->PostModel->notifyUser($request);
-			
-			$user = $this->PostModel->getUserNotification($request);
-			$token = $this->PostModel->getTokenNotification($request);
-			if(!empty($token)){
-				$this->push_notification($token,$user);
-			}
 			$response["response_code"] = "200";
 			$response["response_msg"] = "comment successfully!";
 			$this->response($response ,200);
@@ -462,32 +430,6 @@ class PostRestController extends REST_Controller{
 			$this->response($response ,200);
 		}
 	}
-	
-	
-	function push_notification($token_id,$user){
-		$pushManager = new PushManager(PushManager::ENVIRONMENT_DEV);
-		
-		// Then declare an adapter.
-		$gcmAdapter = new GcmAdapter(array(
-		    'apiKey' => 'AAAAVFtZTBU:APA91bEznrS4pit-LclbbPUxn-EHKTs1omj-Fx2I1NS3-Zso5t-Oz_ifnmv1prL_av-xMAXVBtl-BFjRJhXumAFtidAD_bio29bevwlLXM_z4q0ijmQUMaV-VaMrBs63RQyr4ALLgtnz',
-		));
-		
-		// Set the device(s) to push the notification to.
-		$devices = new DeviceCollection(array(
-		    new Device($token_id->token_id),
-		));
-		
-		// Then, create the push skel.
-		$message = new Message($user->user_fullname.' commented on your post.');
-		
-		// Finally, create and add the push to the manager, and push it!
-		$push = new Push($gcmAdapter, $devices, $message);
-		$pushManager->add($push);
-		$pushManager->push(); // Returns a collection of notified devices
-			
-	}
-
-	
 	
 }
 
