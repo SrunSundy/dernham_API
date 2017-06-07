@@ -6,91 +6,8 @@ class UploadModel extends CI_Model{
 		parent::__construct();		
 	}
 	
-	function uploadUserPhoto( $request ){
+	function uploadUserPhoto($request, $mainfolder){
 
-		$file = $request["image_file"];
-		$new_name_file = $request["new_name"];
-		
-		$response = array();
-		if ( ! empty($file))
-		{
-				
-			$new_name = $new_name_file.".jpg";
-			$target_small_dir = "./uploadimages/user/small/";
-			$target_medium_dir = "./uploadimages/user/medium/";
-			$target_big_dir = "./uploadimages/user/big/";
-		
-			$checkdirectory_small = $this->checkDirectory($target_small_dir);
-			$checkdirectory_medium = $this->checkDirectory($target_medium_dir);
-			$checkdirectory_big = $this->checkDirectory($target_big_dir);
-		
-			$allowfiletype = $this->allowImageType(array("image/jpg","image/jpeg", "image/gif", "image/png"), $file['file']['type']);
-			$allowsize = $this->allowImageSize(10240 , 20000000, $file["file"]["size"]);//20MB
-			//$allowmindimension = $this->allowImageMinimumDimension(500, 300, $file["file"]["tmp_name"]);
-			//$allowmaxdimension = $this->allowImageMaximumDimension(8000, 5000, $file["file"]["tmp_name"]);
-		
-			$permission = array();
-			array_push($permission ,
-			$checkdirectory_small,
-			$checkdirectory_medium,
-			$checkdirectory_big,			
-			$allowfiletype,
-			$allowsize
-			//$allowmindimension,
-			//$allowmaxdimension
-			);
-			$check = $this->checkPermission($permission);
-		
-			$message = $check["message"];
-			$uploadok =  $check["error"];
-			if ($uploadok) {
-				$message = " File can not be uploaded.".$message;
-				$response['is_upload']= false;
-				$response["message"] = $message;
-			} else {
-					
-				$isuploadimg = array();
-				
-		
-				
-				$imgsize = 960;
-				list($width, $height) = getimagesize( $file["file"]["tmp_name"]);
-				if($width < 960){
-					$imgsize = $width;
-				}
-				$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $file ["file"]["tmp_name"], $imgsize, 80);
-				$medium = $this->resizeImageFixpixel($target_medium_dir.$new_name, $file ["file"]["tmp_name"] , 180 , 80);									
-				$small = $this->resizeImageFixpixel($target_small_dir.$new_name, $file ["file"]["tmp_name"], 50, 80);
-				
-				$errorupload = false;
-				array_push($isuploadimg, $big, $medium, $small);
-				for($i=0 ; $i<count($isuploadimg); $i++){
-					if(!$isuploadimg[$i]){
-						$errorupload = true;
-						break;
-					}
-				}
-				if($errorupload){
-					$message = "There was an error uploading your file.";
-					$response['is_upload']= false;
-					$response["message"] = $message;
-				}else{
-					$response['is_upload'] = true;
-					$response['message'] =" File upload successfully!";
-					$response['filename'] = $new_name;
-				}
-		
-			}
-		}else{
-			$response['is_upload']= false;
-			$response["message"] = "No File!";
-		}
-		//$json = json_encode($response);
-		return $response;
-	}
-	
-	function uploadSinglePostImage($request, $mainfolder){
-		
 		$file = $request["image_file"];
 		
 		$response = array();
@@ -98,10 +15,10 @@ class UploadModel extends CI_Model{
 		{
 			$this->load->helper('dernhamutils');
 			$new_name = generateRandomString(10).".jpg";
-			$target_small_dir = $mainfolder."post/small/";
-			$target_medium_dir = $mainfolder."post/medium/";
-			$target_big_dir = $mainfolder."post/big/";
-		
+			$target_small_dir = $mainfolder."small/";
+			$target_medium_dir = $mainfolder."medium/";
+			$target_big_dir = $mainfolder."big/"; 
+			
 			$checkdirectory_small = $this->checkDirectory($target_small_dir);
 			$checkdirectory_medium = $this->checkDirectory($target_medium_dir);
 			$checkdirectory_big = $this->checkDirectory($target_big_dir);
@@ -129,8 +46,109 @@ class UploadModel extends CI_Model{
 				$message = " File can not be uploaded.".$message;
 				$response['is_upload']= false;
 				$response["message"] = $message;
-			} else {
-							
+			} else {	
+				$isuploadimg = array();			
+				
+				$info = getimagesize($file["file"]["tmp_name"]);
+				list($width, $height) = $info;
+				
+				
+				$my_img_size = 0;
+				$my_img_medium_size = 0;
+				if($width > $height){
+					$my_img_size = $width;
+					$my_img_medium_size = $width;
+				}else{
+					$my_img_size = $height;
+					$my_img_medium_size = $height;
+				}
+				
+				if($my_img_size > 960){
+					$my_img_size = 960;
+				}
+				
+				if($my_img_medium_size > 520){
+					$my_img_medium_size = 520;
+				}
+				
+				
+				$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $file["file"]["tmp_name"] , $my_img_size, 80);
+				$medium = $this->resizeImageFixpixel($target_medium_dir.$new_name, $file["file"]["tmp_name"] , $my_img_medium_size, 80);
+				$small = $this->resizeImageFixpixelAndScaleCenter($target_small_dir.$new_name, $file["file"]["tmp_name"] , 180, 80);
+				//	$small = $this->resizeImageFixpixel($target_small_dir.$new_name, $_FILES["file"]["tmp_name"][$i] , 180, 80);
+				//	$extreme_small = $this->resizeImageFixpixel($target_extreme_small_dir.$new_name, $_FILES["file"]["tmp_name"][$i] , 160, 80);
+				
+				$errorupload = false;
+				array_push($isuploadimg, $big, $medium, $small);
+				for($j=0 ; $j<count($isuploadimg); $j++){
+					if(!$isuploadimg[$j]){
+						$errorupload = true;
+						break;
+					}
+				}
+				
+				if($errorupload){
+					$message = "There was an error uploading your file.";
+					$response['is_upload']= false;
+					$response["message"] = $message;
+					$response['filename'] = "";
+				}else{
+					$response['is_upload'] = true;
+					$response['message'] =" File upload successfully!";
+					$response['filename'] = $new_name;
+				}
+		
+			}
+		}else{
+			$response['is_upload']= false;
+			$response["message"] = "No File!";
+			$response['filename'] = "";
+		}
+		//$json = json_encode($response);
+		return $response;
+	}
+	
+	function uploadSinglePostImage($request, $mainfolder){
+		
+		$file = $request["image_file"];
+		
+		$response = array();
+		if ( ! empty($file))
+		{
+			$this->load->helper('dernhamutils');
+			$new_name = generateRandomString(10).".jpg";
+			$target_small_dir = $mainfolder."post/small/";
+			$target_medium_dir = $mainfolder."post/medium/";
+			$target_big_dir = $mainfolder."post/big/";
+			
+			$checkdirectory_small = $this->checkDirectory($target_small_dir);
+			$checkdirectory_medium = $this->checkDirectory($target_medium_dir);
+			$checkdirectory_big = $this->checkDirectory($target_big_dir);
+		
+			$allowfiletype = $this->allowImageType(array("image/jpg","image/jpeg", "image/gif", "image/png"), $file['file']['type']);
+			$allowsize = $this->allowImageSize(10240 , 20000000, $file["file"]["size"]);//20MB
+			//$allowmindimension = $this->allowImageMinimumDimension(500, 300, $file["file"]["tmp_name"]);
+			//$allowmaxdimension = $this->allowImageMaximumDimension(8000, 5000, $file["file"]["tmp_name"]);
+		
+			$permission = array();
+			array_push($permission ,
+			$checkdirectory_small,
+			$checkdirectory_medium,
+			$checkdirectory_big,
+			$allowfiletype,
+			$allowsize
+			//$allowmindimension,
+			//$allowmaxdimension
+			);
+			$check = $this->checkPermission($permission);
+		
+			$message = $check["message"];
+			$uploadok =  $check["error"];
+			if ($uploadok) {
+				$message = " File can not be uploaded.".$message;
+				$response['is_upload']= false;
+				$response["message"] = $message;
+			} else {	
 				$isuploadimg = array();			
 				
 				$info = getimagesize($file["file"]["tmp_name"]);
@@ -219,7 +237,7 @@ class UploadModel extends CI_Model{
 				$checkdirectory_small = $this->checkDirectory($target_small_dir);
 				$checkdirectory_medium = $this->checkDirectory($target_medium_dir);
 				$checkdirectory_big = $this->checkDirectory($target_big_dir);
-				$allowfiletype = $this->allowImageType(array("image/jpeg", "image/gif", "image/png"), $file['file']['type'][$i]);
+				//$allowfiletype = $this->allowImageType(array("image/jpeg", "image/gif", "image/png"), $file['file']['type'][$i]);
 				$allowsize = $this->allowImageSize(5120 , 20000000, $file["file"]["size"][$i]);//20MB
 				$allowmindimension = $this->allowImageMinimumDimension(200, 200, $file["file"]["tmp_name"][$i]);
 				$allowmaxdimension = $this->allowImageMaximumDimension(8000, 5000, $file["file"]["tmp_name"][$i]);
@@ -230,7 +248,7 @@ class UploadModel extends CI_Model{
 				$checkdirectory_small,
 				$checkdirectory_medium,
 				$checkdirectory_big,
-				$allowfiletype,
+				//$allowfiletype,
 				$allowsize,
 				$allowmindimension,
 				$allowmaxdimension

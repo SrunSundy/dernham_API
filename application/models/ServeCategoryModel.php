@@ -35,7 +35,5 @@ class ServeCategoryModel extends CI_Model{
 		
 	}
 	
-	
-	
 }
 ?>

@@ -23,6 +23,16 @@ class UserModel extends CI_Model{
 		
 	}
 	
+	function updateUserVerificationCode($request){
+		$sql = " UPDATE nham_user SET user_verification_code = ?
+					 WHERE user_id = ? ";
+		
+		$param["verification_code"] = $request["verification_code"];
+		$param["user_id"] = $request["user_id"];			
+		$query = $this->db->query($sql , $param);
+		return $query;
+	}
+	
 	function loginUser($request){
 		
 		$sql = "SELECT u.user_id,
@@ -32,6 +42,8 @@ class UserModel extends CI_Model{
 					u.user_photo,
 					u.user_quote,
 					u.user_interest,
+					u.fbid,
+					u.type,
 					u.user_phone,
 					u.user_status
 				FROM nham_user u
@@ -46,7 +58,7 @@ class UserModel extends CI_Model{
 	
 	function checkIfUserexist($request){
 		
-		$sql = "SELECT u.user_status
+		$sql = "SELECT u.user_id ,u.user_status
 					FROM nham_user u
 					WHERE u.user_email = ? LIMIT 1";
 		
@@ -123,7 +135,7 @@ class UserModel extends CI_Model{
 	}
 	
 	function registerFBUser($request){
-		$sql = "INSERT INTO nham_user(user_fullname, user_email, user_gender, user_password, user_verification_code, type, fbid) VALUES(?, ?, ?, ?, ?, ?, ?)";
+		$sql = "INSERT INTO nham_user(user_fullname, user_email, user_gender, user_password, user_verification_code, type, fbid, user_photo) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
 		$param["fullname"] = $request["fullname"];
 		$param["email"] = ($request["email"] != "") ? $request["email"] : "N/A";
 		$param["gender"] = ($request["gender"] != "") ? $request["gender"] : "N/A";
@@ -131,6 +143,7 @@ class UserModel extends CI_Model{
 		$param["verification_code"] = "N/A";
 		$param["type"] = 1; //0 normal login & 1 login as fb
 		$param["fbid"] = $request["fbid"];
+		$param["user_photo"] = $request["fbid"].'.jpg';
 		
 		$query = $this->db->query($sql , $param);
 		if($this->db->affected_rows() != 1)
@@ -172,14 +185,15 @@ class UserModel extends CI_Model{
 	}
 	
 	function getUserProfileIsFollowed($request){
-		$sql = "SELECT count(*) as is_followed
+		$sql = "SELECT count(*) as count
 				FROM nham_user_follow u
 				WHERE u.follower_id = ? and u.following_id = ? LIMIT 1";
 		
 		$param["user_id"] = $request["user_id"];
 		$param["profile_id"] = $request["profile_id"];
 		$query = $this->db->query($sql , $param);
-		return ($query->row()->is_followed) == 0 ? false : true ;
+		
+		return (($query->row()->count) == 0 ? 0 : 1);//($query->row()->is_followed) == 0 ? false : true ;
 	}
 	
 	function updateUserProfileData($request){
@@ -216,7 +230,7 @@ class UserModel extends CI_Model{
 	}
 	
 	function getNumberFollower($request){
-		$sql = "SELECT count(*) as count
+		$sql = "SELECT count(follower_id) as count
 				FROM nham_user_follow u
 				WHERE u.following_id = ?";
 		
@@ -226,7 +240,7 @@ class UserModel extends CI_Model{
 	}
 	
 	function getNumberFollowing($request){
-		$sql = "SELECT count(*) as count
+		$sql = "SELECT count(following_id) as count
 				FROM nham_user_follow u
 				WHERE u.follower_id = ?";
 		
@@ -245,8 +259,172 @@ class UserModel extends CI_Model{
 		return ($query->row()->count);
 	}
 	
+	function reportPost($request){
+	
+		$sql = "INSERT INTO nham_report_post(post_id, user_id, report_description) VALUES(?, ?, ?)";
+		$param["post_id"] = $request["post_id"];
+		$param["user_id"] = $request["user_id"];
+		$param["report_description"] = "Bad content";
+		
+		$query = $this->db->query($sql , $param);
+		
+		return ($this->db->affected_rows() != 1) ? false : true;
+		
+	}
+	
+	function savePost($request){
+	
+		$sql = "INSERT INTO nham_saved_post(post_id, user_id) VALUES(?, ?)";
+		$param["post_id"] = $request["post_id"];
+		$param["user_id"] = $request["user_id"];
+		
+		$query = $this->db->query($sql , $param);
+		
+		return ($this->db->affected_rows() != 1) ? false : true;
+		
+	}
+	
+	function unsavedPost($request){
+		$sql = "DELETE from nham_saved_post where user_id = ? and post_id = ?";
+		$param["user_id"] = $request["user_id"];
+		$param["post_id"] = $request["post_id"];
+		
+		$query = $this->db->query($sql , $param);
+		return ($this->db->affected_rows() != 1) ? false : true;
+		
+	}
+	
+	function deletePost($request){
+	
+		$sql = "UPDATE nham_user_post set post_status = 0 WHERE post_id = ?";
+		$param["post_id"] = $request["post_id"];
+		
+		$query = $this->db->query($sql , $param);
+		
+		return ($query);
+		
+	}
+	
+	function listTopMembers( $request ){
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
+		$sql = "SELECT u.user_id, u.user_fullname, u.user_photo
+			FROM nham_user u
+			LEFT JOIN nham_user_follow uf ON u.user_id = uf.following_id
+			GROUP BY u.user_id
+			ORDER BY count( uf.follower_id ) DESC ";
+		
+		
+		$query_record = $this->db->query($sql);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= "LIMIT ? OFFSET ? ";
+		array_push($param, $limit , $offset);
+		$query = $this->db->query($sql, $param);
+		
+		$response["response_data"] = $query->result();
+		return $response;
+	}
+	
+	function updateUserPhotoName( $request ){
+		
+		if(copy('./uploadimages/user/medium/'.$request["temp_photo"], $_SERVER['DOCUMENT_ROOT'].'/user_profile/'.$request["temp_photo"])){
+			$sql = "Update nham_user set user_photo = ? where user_id = ?";
+			$param["user_photo"] = $request["temp_photo"];
+			$param["user_id"] = $request["user_id"];
+			$query = $this->db->query($sql , $param);
+			return ($this->db->affected_rows() != 1) ? false : true;
+		}
+		
+		return false;
+	}
+	
+	function updateUserPassword($request){
+	
+		$user_id = $request["user_id"];
+		$old_pwd = $request["old_pwd"];
+		$new_pwd = $request["new_pwd"];
+		$sql = " UPDATE nham_user SET user_password = ? WHERE user_id = ? ";
+		
+		$param["user_id"] = $request["user_id"];
+		$param["new_pwd"] = $request["new_pwd"];
+		$query = $this->db->query($sql , $param);
+		
+		return ($query);
+	}
+	
+	function insertDeviceToken($request){
+	
+		$sql = "INSERT INTO nham_device_token(token_id, user_id, type) VALUES(?, ?, ?)";
+		$param["token_id"] = $request["token_id"];
+		$param["user_id"] = $request["user_id"];
+		$param["type"] = $request["type"];
+		
+		$query = $this->db->query($sql , $param);
+		
+		return ($this->db->affected_rows() != 1) ? false : true;
+		
+	}
 	
 	
+	function getUserNotification( $request ){
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
+		
+		
+		$sql = "select n.actioner_id, n.object_id, n.action_id, n.description, n.created_date, u.user_fullname, u.user_photo,
+			pi.post_image_src	
+			from nham_notification n 
+			left join nham_user u on u.user_id = n.actioner_id
+			left join nham_user_post_image pi on pi.post_id = n.object_id
+			where (n.action_id = 3 and 
+			n.object_id = ".$request["user_id"].") or 
+			object_id in (select p.post_id from nham_user_post p where p.user_id = ".$request["user_id"].")
+			order by n.created_date DESC";
+		
+		
+		$query_record = $this->db->query($sql);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= " LIMIT ? OFFSET ? ";
+		array_push($param, $limit , $offset);
+		$query = $this->db->query($sql, $param);
+		
+		$response["response_data"] = $query->result();
+		return $response;
+	}
 	
 }
 ?>

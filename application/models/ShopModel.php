@@ -145,11 +145,18 @@ class ShopModel extends CI_Model{
 					SQRT(POW(69.1 * (sh.shop_lat_point - ? ), 2) +
 						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
 				FROM nham_shop sh
-				WHERE sh.shop_status = 1
-				HAVING distance < ? ORDER BY distance ";
-				
+				WHERE sh.shop_status = 1 ";
+		$param = array();
+		array_push($param, $current_lat, $current_lng);
 		
-		$query_record = $this->db->query($sql , array($current_lat, $current_lng, $nearby_value));
+		if(isset($request["sch_str"])){
+			$sql .= " AND REPLACE(CONCAT_WS(sh.shop_name_en,sh.shop_name_kh,sh.shop_serve_type,sh.shop_address),' ','') LIKE REPLACE(?,' ','') ";
+			array_push($param, "%".$request["sch_str"]."%");
+		}
+		$sql .= " HAVING distance < ? ORDER BY distance ";
+		array_push($param, $nearby_value);
+		
+		$query_record = $this->db->query($sql , $param);
 		$total_record = count($query_record->result());
 		$total_page = $total_record / $row;
 		if( ($total_record % $row) > 0){
@@ -160,7 +167,10 @@ class ShopModel extends CI_Model{
 		$response["total_page"] = (int)$total_page;
 		
 		$sql .= " LIMIT ? OFFSET ? ";
-		$query = $this->db->query($sql , array($current_lat, $current_lng, $nearby_value, $limit, $offset));
+		
+		array_push($param, $limit, $offset);
+		
+		$query = $this->db->query($sql , $param);
 		$response["response_data"] = $query->result();
 			
 		return $response;

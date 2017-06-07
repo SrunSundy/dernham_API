@@ -52,7 +52,8 @@ class PostModel extends CI_Model{
 					u.user_photo,
 					u.user_status,
 					p.post_count_view,
-					p.post_count_share					
+					p.post_count_share
+										
 				FROM nham_user_post p
 				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
 				LEFT JOIN nham_user u ON p.user_id = u.user_id
@@ -76,6 +77,7 @@ class PostModel extends CI_Model{
 		$response["response_data"] = $query->result();
 		return $response;
 	}
+	
 	
 	function isUserLiked( $request ){
 		
@@ -121,7 +123,7 @@ class PostModel extends CI_Model{
 	
 	
 	function countLike( $request ){
-		$sql = "SELECT count(*) as count FROM nham_user_like where post_id = ?";
+		$sql = "SELECT count(user_id) as count FROM nham_user_like where post_id = ?";
 		$param["post_id"] = $request["post_id"];
 		$query = $this->db->query($sql , $param);
 		return $query->row();
@@ -256,6 +258,99 @@ class PostModel extends CI_Model{
 		$response["response_data"] = $query->result();
 		return $response;
 	}
+	
+	function listSavedPosts( $request ){
+		
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		$user_id = $request["user_id"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
+		
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
+		$sql = "SELECT
+					sp.id,
+					sp.post_id,
+					p.post_caption,
+					pi.post_image_src,
+					p.shop_id,
+					s.shop_name_en,
+					s.shop_name_kh,
+					p.user_id,
+					u.user_fullname
+										
+				FROM nham_saved_post sp
+				LEFT JOIN nham_user_post p ON sp.post_id = p.post_id
+				LEFT JOIN nham_user u ON p.user_id = u.user_id
+				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
+				LEFT JOIN nham_user_post_image pi ON sp.post_id = pi.post_id
+				WHERE sp.status = 1 and sp.user_id = ".$user_id." GROUP BY sp.post_id ORDER BY sp.created_date DESC ";
+		
+		
+		$query_record = $this->db->query($sql);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= "LIMIT ? OFFSET ? ";
+		array_push($param, $limit , $offset);
+		$query = $this->db->query($sql, $param);
+		
+		$response["response_data"] = $query->result();
+		return $response;
+	}
+	
+	function getUserNotification($request){
+		$sql = "SELECT 	u.user_fullname
+				FROM nham_user u
+				WHERE u.user_id = ? LIMIT 1";
+		
+		$param["user_id"] = $request["user_id"];
+		$query = $this->db->query($sql , $param);
+		return $query->row();
+	}
+	
+	function getTokenNotification($request){
+		$sql = "SELECT t.token_id FROM nham_device_token t WHERE t.user_id in 
+			(SELECT p.user_id from nham_user_post p where p.post_id = ?)";
+		
+		$param["post_id"] = $request["post_id"];
+		$query = $this->db->query($sql , $param);
+		return $query->row();
+	}
+	
+	function notifyUser($request){
+		$des = array("","liked","commented","followed");
+		$sql = "INSERT INTO nham_notification(
+				actioner_id, 
+				object_id, 
+				action_id,
+				description
+				) 
+			VALUES(?, ?, ?, ?)";
+		
+		$param["actioner_id"] = $request["user_id"];
+		$param["object_id"] = $request["object_id"];
+		$param["action_id"] = $request["action_id"];
+		$param["description"] = $des[$request["action_id"]];
+		
+		
+		$query = $this->db->query($sql , $param);			
+	    	$inserted_id = $this->db->insert_id();		
+		return $inserted_id;
+	}
+	
+	
+	
 	
 }
 
