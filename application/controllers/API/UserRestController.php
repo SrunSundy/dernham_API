@@ -527,6 +527,15 @@ class UserRestController extends REST_Controller{
 	}
 	
 	function user_follow_post(){
+		
+		/* {
+			 "request_data" : {
+		 		"user_id" : "1",
+		 		"profile_id" : "8"
+		 	  }
+		 } */
+		
+		
 		$request = json_decode($this->input->raw_input_stream,true);
 		
 		if(!isset($request["request_data"])){

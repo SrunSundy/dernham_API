@@ -221,9 +221,15 @@ class UserModel extends CI_Model{
 	
 	function reqUserFollow($request){
 	
-		$sql = "INSERT INTO nham_user_follow(follower_id, following_id) VALUES(?, ?)";
+		$sql = "INSERT INTO nham_user_follow(follower_id, following_id) SELECT ?, ? FROM dual
+				WHERE (
+					SELECT count(*) from nham_user_follow
+					WHERE follower_id = ? AND following_id = ?
+				) < 1 ";
 		$param["user_id"] = $request["user_id"];
 		$param["profile_id"] = $request["profile_id"];
+		$param["user_id_1"] = $request["user_id"];
+		$param["profile_id_1"] = $request["profile_id"];
 		
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;	

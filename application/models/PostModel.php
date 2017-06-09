@@ -104,9 +104,16 @@ class PostModel extends CI_Model{
 	}
 	
 	function userLike( $request ){
-		$sql = "INSERT INTO nham_user_like(user_id,post_id) VALUES(?, ?)";
+		$sql = " INSERT INTO nham_user_like(user_id,post_id) 
+				SELECT ?, ? FROM dual 
+				WHERE (
+					SELECT count(*) from nham_user_like
+					WHERE user_id = ? AND post_id = ?
+				) < 1 ";
 		$param["user_id"] = $request["user_id"];
 		$param["post_id"] = $request["post_id"];
+		$param["user_id_1"] = $request["user_id"];
+		$param["post_id_1"] = $request["post_id"];
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;
 	}
