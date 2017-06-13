@@ -25,9 +25,9 @@ class LocationModel extends CI_Model{
 				WHERE country_status = 1 ";
 		$param = array();
 		
-		if(isset($reqeust["srch_name"]) && $reqeust["srch_name"] != ""){
+		if(isset($request["srch_name"]) && $request["srch_name"] != ""){
 			
-			$sql .= " AND country_name LIKE ? ";
+			$sql .= " AND  REPLACE(country_name,' ','')  LIKE REPLACE(?,' ','') ";
 			array_push($param, "%".$request["srch_name"]."%");			
 		}
 		
@@ -72,12 +72,12 @@ class LocationModel extends CI_Model{
 		if(isset($request["country_id"])){
 			
 			$sql .= " AND country_id = ? ";
-			array_push($param, "%".$request["country_id"]."%");
+			array_push($param, $request["country_id"]);
 		}
 		
-		if(isset($reqeust["srch_name"]) && $reqeust["srch_name"] != ""){
+		if(isset($request["srch_name"]) && $request["srch_name"] != ""){
 			
-			$sql .= " AND city_name LIKE ? ";
+			$sql .= " AND  REPLACE(city_name,' ','') LIKE REPLACE(?,' ','') ";
 			array_push($param, "%".$request["srch_name"]."%");
 		}
 		
@@ -122,13 +122,13 @@ class LocationModel extends CI_Model{
 		if(isset($request["city_id"])){
 		
 			$sql .= " AND city_id = ? ";
-			array_push($param, "%".$request["city_id"]."%");
+			array_push($param, $request["city_id"]);
 		}
 		
-		if(isset($reqeust["srch_name"]) && $reqeust["srch_name"] != ""){
+		if(isset($request["srch_name"]) && $request["srch_name"] != ""){
 			
-			$sql .= " AND district_name LIKE ? ";
-			array_push($param, "%".$request["district_name"]."%");
+			$sql .= " AND REPLACE(district_name,' ','') LIKE REPLACE(?,' ','') ";
+			array_push($param, "%".$request["srch_name"]."%");
 		}
 		
 		$query_record = $this->db->query($sql , $param);
@@ -172,13 +172,13 @@ class LocationModel extends CI_Model{
 		if(isset($request["district_id"])){
 			
 			$sql .= " AND district_id = ? ";
-			array_push($param, "%".$request["district_id"]."%");
+			array_push($param, $request["district_id"]);
 		}
 		
-		if(isset($reqeust["srch_name"]) && $reqeust["srch_name"] != ""){
+		if(isset($request["srch_name"]) && $request["srch_name"] != ""){
 			
-			$sql .= " AND commune_name LIKE ? ";
-			array_push($param, "%".$request["commune_name"]."%");
+			$sql .= " AND REPLACE(commune_name,' ','') LIKE REPLACE(?,' ','') ";
+			array_push($param, "%".$request["srch_name"]."%");
 		}
 		
 		$query_record = $this->db->query($sql , $param);

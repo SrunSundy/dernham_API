@@ -448,8 +448,9 @@ class ShopModel extends CI_Model{
 					shop_status,
 					shop_time_zone,
 					shop_lat_point,
-					shop_lng_point
-				)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+					shop_lng_point,
+					shop_short_description
+				)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		$param["shop_name_en"] = $request["shop_name_en"];
 		$param["shop_name_kh"] = $request["shop_name_kh"];
 		$param["shop_logo"] = $request["shop_logo"];
@@ -464,6 +465,7 @@ class ShopModel extends CI_Model{
 		$param["shop_time_zone"] = (!isset($request["shop_time_zone"])) ? "Asia/Phnom_Penh" : $request["shop_time_zone"];
 		$param["shop_lat_point"] = $request["shop_lat_point"];
 		$param["shop_lng_point"] = $request["shop_lng_point"];
+		$param["shop_short_des"] = $request["shop_short_des"];
 		$query = $this->db->query($sql , $param);		
 		return ($this->db->affected_rows() != 1) ? false : true;
 	}
