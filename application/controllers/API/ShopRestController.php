@@ -468,7 +468,10 @@ class ShopRestController extends REST_Controller{
 			"shop_lng_point" : 104.88913536071777
 			"serve_categories" : [
 				"1","2"
-			}
+			],
+			"sh_facility" : [
+				"1","2"
+			]
 		}
 		} */
 		
@@ -482,18 +485,34 @@ class ShopRestController extends REST_Controller{
 			$this->response($response, 400);
 			die();
 		}
+		
 		$request = $request["request_data"];
+		
 		$request["shop_status"] = "2";
 		$isInsert = $this->ShopModel->insertShop($request);
 		$insert_shop_id = $this->db->insert_id();
 		
 		if($isInsert){
 			
-			$req_cate["shop_id"] = $insert_shop_id;
-			$req_cate["serve_categories"] = $request["serve_categories"];
-			$this->load->model('ShopCategoryMapModel');
-			$isInsert_cate = $this->ShopCategoryMapModel->insertShopServeCategory($req_cate);
-		
+			//insert served categories			
+			if(isset($request["serve_categories"]) && count($request["serve_categories"]) > 0 && 
+					$request["serve_categories"] != "" ){
+				$req_cate["shop_id"] = $insert_shop_id;
+				$req_cate["serve_categories"] = $request["serve_categories"];
+				$this->load->model('ShopCategoryMapModel');
+				$isInsert_cate = $this->ShopCategoryMapModel->insertShopServeCategory($req_cate);
+			}	
+			
+			if(isset($request["sh_facility"]) && $request["sh_facility"] > 0 &&
+					$request["sh_facility"] != ""){
+				//insert shop's facilities
+				$req_facility["shop_id"] = $insert_shop_id;
+				$req_facility["sh_facility"] = $request["sh_facility"];
+				$this->load->model('FacilityModel');
+				$this->FacilityModel->insertShopFacility($req_facility);
+			}
+			
+			
 			if ($this->db->trans_status() === FALSE)
 			{
 				$this->db->trans_rollback();

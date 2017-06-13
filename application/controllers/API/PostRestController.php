@@ -217,7 +217,8 @@ class PostRestController extends REST_Controller{
 		$request = $request["request_data"];
 		
 		$this->load->helper('validate');
-		if(!isset($request["post_id"]) || IsNullOrEmptyString($request["post_id"])){
+		if(!isset($request["post_id"]) || IsNullOrEmptyString($request["post_id"])||
+		!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"])){
 			$response["response_code"] = "400";
 			$response["error"] = "bad request";
 			$this->response($response, 400);

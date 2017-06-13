@@ -51,6 +51,7 @@ class LocationRestController extends REST_Controller{
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');
 		$request["srch_name"] = $this->input->get('srch_name');
+		$request["country_id"] = $this->input->get('country_id');
 		
 		$responsequery = $this->LocationModel->listCity($request);
 		
@@ -70,6 +71,7 @@ class LocationRestController extends REST_Controller{
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');
 		$request["srch_name"] = $this->input->get('srch_name');
+		$request["city_id"] = $this->input->get('city_id');
 		
 		$responsequery = $this->LocationModel->listDistrict($request);
 		
@@ -89,6 +91,7 @@ class LocationRestController extends REST_Controller{
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');
 		$request["srch_name"] = $this->input->get('srch_name');
+		$request["district_id"] = $this->input->get('district_id');
 		
 		$responsequery = $this->LocationModel->listCommune($request);
 		

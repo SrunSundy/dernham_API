@@ -377,7 +377,8 @@ class UserRestController extends REST_Controller{
         		file_put_contents($path.$f_profile_output, file_get_contents($f_profile));
 			$data1 = $this->UserModel->registerFBUser($request);
 			
-			//$token = $this->UserModel->insertDeviceToken($request); 
+			//insert device token
+			$token = $this->UserModel->insertDeviceToken($request); 
 			
 			if(count($data1)>=1){
 				$response["response_code"] = "200";
