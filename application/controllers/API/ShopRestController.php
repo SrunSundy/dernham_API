@@ -465,7 +465,9 @@ class ShopRestController extends REST_Controller{
 			"shop_opening_time" : "9:00",
 			"shop_close_time" : "20:00",
 			"shop_lat_point" : 11.565723328439192,
-			"shop_lng_point" : 104.88913536071777
+			"shop_lng_point" : 104.88913536071777,
+			"shop_short_des" : "This is the best shop. I have ever seen",
+			"shop_phone" : "1025556654|012466856",
 			"serve_categories" : [
 				"1","2"
 			],
