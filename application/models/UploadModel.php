@@ -227,6 +227,7 @@ class UploadModel extends CI_Model{
 			
 			$number_of_files = count($file['file']['name']);
 			
+			
 			for ($i = 0; $i < $number_of_files; $i++){
 		
 				$report = array();

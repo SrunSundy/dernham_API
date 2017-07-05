@@ -57,20 +57,38 @@ class UploadRestController extends REST_Controller{
 		}
 			
 		$request_upload["image_file"] = $_FILES;
-		$upload_target = "./uploadimages/temp/";		
-		$response_data = $this->UploadModel->uploadMutilplePostImages($request_upload, $upload_target);
+		$upload_target = "./uploadimages/temp/";
 		
-		if($response_data["is_upload"]){
-			$response["response_code"] = "200";
-			$response["response_msg"] = $response_data["message"];
-			$response["response_data"] = $response_data["fileupload"];
-			$this->response($response, 200);
-		}else{
-			$response["response_code"] = "000";
-			$response["response_msg"] = $response_data["message"];
-			$response["response_data"] = $response_data["fileupload"];
-			$this->response($response, 200);
+		$response_data = array();
+		if (is_array($_FILES["file"]["name"])){
+			$response_data = $this->UploadModel->uploadMutilplePostImages($request_upload, $upload_target);
+			if($response_data["is_upload"]){
+				$response["response_code"] = "200";
+				$response["response_msg"] = $response_data["message"];
+				$response["response_data"] = $response_data["fileupload"];
+				$this->response($response, 200);
+			}else{
+				$response["response_code"] = "000";
+				$response["response_msg"] = $response_data["message"];
+				$response["response_data"] = $response_data["fileupload"];
+				$this->response($response, 200);
+			}
+		}else{ 
+			$response_data = $this->UploadModel->uploadSinglePostImage($request_upload, $upload_target);
+			if($response_data["is_upload"]){
+				$response["response_code"] = "200";
+				$response["response_msg"] = $response_data["message"];
+				$response["response_data"] = $response_data["filename"];
+				$this->response($response, 200);
+			}else{
+				$response["response_code"] = "000";
+				$response["response_msg"] = $response_data["message"];
+				$response["response_data"] = $response_data["filename"];
+				$this->response($response, 200);
+			}
 		}
+				
+		
 	}
 	
 	function upload_profile_photo_totemp_post(){
