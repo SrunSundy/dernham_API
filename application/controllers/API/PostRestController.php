@@ -33,20 +33,40 @@ class PostRestController extends REST_Controller{
 		 	}],
 			"caption" : "leap",
 			"shop_id" : "20",
-			"user_id" : "39"
+			"user_id" : "39",
+			"type" : ""
 		  }
 		} */
 		
 		$request = json_decode($this->input->raw_input_stream,true);
 		if(!isset($request["request_data"])){
 			$response["response_code"] = "400";
-			$response["error"] = "bad request";
+			$response["error"] = "bad request.";
 			$this->response($response, 400);
 			die();
 		}
 		
-		$this->db->trans_begin();
+		
 		$request = $request["request_data"];
+		$this->load->helper('validate');
+		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
+			//!isset($request["shop_id"]) || IsNullOrEmptyString($request["shop_id"])||
+			//!isset($request["caption"]) || IsNullOrEmptyString($request["caption"])||
+			!isset($request["type"]) || IsNullOrEmptyString($request["type"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request..";
+			$this->response($response, 400);
+			die();
+		}
+		
+		if(!isset($request["shop_id"]) || IsNullOrEmptyString($request["shop_id"])){
+			$request["shop_id"] = "";
+		}
+		if(!isset($request["caption"]) || IsNullOrEmptyString($request["caption"])){
+			$request["caption"] = "";
+		}
+		
+		$this->db->trans_begin();
 		$inserted_post_id = $this->PostModel->insertUserPost($request);
 		
 		if($inserted_post_id != 0){			
@@ -64,10 +84,14 @@ class PostRestController extends REST_Controller{
 			else
 			{
 				$this->db->trans_commit();
-				for($i=0; $i< count($request["post_image"]); $i++){
+				/* for($i=0; $i< count($request["post_image"]); $i++){
 					copy('./uploadimages/temp/post/big/'.$request["post_image"][$i]["image_name"], $_SERVER['DOCUMENT_ROOT'].'/user_postimage/'.$request["post_image"][$i]["image_name"]);
 					
-				}
+				} */
+				$this->load->model("UploadModel");
+				$is_move = $this->UploadModel->moveThreeTpyeImageToReal(UPLOAD_FILE_PATH ."/uploadimages/temp/post/",
+				    UPLOAD_FILE_PATH ."/uploadimages/real/post/", $request["post_image"]);
+				
 				$response["response_code"] = "200";
 				$response["response_msg"] = "Post successfully";
 				$this->response($response ,200);

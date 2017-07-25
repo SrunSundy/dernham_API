@@ -117,9 +117,9 @@ class UploadModel extends CI_Model{
 		{
 			$this->load->helper('dernhamutils');
 			$new_name = generateRandomString(10).".jpg";
-			$target_small_dir = $mainfolder."post/small/";
-			$target_medium_dir = $mainfolder."post/medium/";
-			$target_big_dir = $mainfolder."post/big/";
+			$target_small_dir = $mainfolder."small/";
+			$target_medium_dir = $mainfolder."medium/";
+			$target_big_dir = $mainfolder."big/";
 			
 			$checkdirectory_small = $this->checkDirectory($target_small_dir);
 			$checkdirectory_medium = $this->checkDirectory($target_medium_dir);
@@ -219,9 +219,9 @@ class UploadModel extends CI_Model{
 		{
 				
 			/* $target_extreme_small_dir = "./uploadimages/shopimages/extreme_small/"; */
-			$target_small_dir = $mainfolder."post/small/";
-			$target_medium_dir = $mainfolder."post/medium/";
-			$target_big_dir = $mainfolder."post/big/";
+			$target_small_dir = $mainfolder."small/";
+			$target_medium_dir = $mainfolder."medium/";
+			$target_big_dir = $mainfolder."big/";
 				
 			$reportwrapper = array();
 			
@@ -340,6 +340,102 @@ class UploadModel extends CI_Model{
 		
 	}
 	
+	//user , post
+	function moveThreeTpyeImageToReal($source , $destination, $imagefile ){
+	    
+	    $s_small_dir = $source ."small/";
+	    $s_medium_dir = $source ."medium/";
+	    $s_big_dir = $source ."big/";
+	    
+	    $d_small_dir = $destination ."small/";
+	    $d_medium_dir = $destination ."medium/";
+	    $d_big_dir = $destination ."big/";
+	    
+	    if(is_array($imagefile)){
+	        
+	        $is_move = false;
+	        for($i=0; $i< count($imagefile); $i++){
+	            
+	            if(file_exists($s_small_dir.$imagefile[$i]["image_name"])){
+	                $is_move = rename($s_small_dir.$imagefile[$i]["image_name"], $d_small_dir.$imagefile[$i]["image_name"]);
+	            }
+	            
+	            if(file_exists($s_medium_dir.$imagefile[$i]["image_name"])){
+	                $is_move = rename($s_medium_dir.$imagefile[$i]["image_name"], $d_medium_dir.$imagefile[$i]["image_name"]);
+	            }
+	            
+	            if(file_exists($s_big_dir.$imagefile[$i]["image_name"])){
+	                $is_move = rename($s_big_dir.$imagefile[$i]["image_name"], $d_big_dir.$imagefile[$i]["image_name"]);
+	            }
+	        }
+	        return $is_move;
+	        
+	    }else{
+	      
+	        $is_move_1 = false;
+	        $is_move_2 = false;
+	        $is_move_3 = false;
+	        
+	        if(file_exists($s_small_dir.$imagefile)){
+	            $is_move_1 = rename($s_small_dir.$imagefile , $d_small_dir.$imagefile);
+	        }
+	        
+	        if(file_exists($s_medium_dir.$imagefile)){
+	            $is_move_2 = rename($s_medium_dir.$imagefile , $d_medium_dir.$imagefile);
+	        }
+	        
+	        if(file_exists($s_big_dir.$imagefile)){
+	            $is_move_3 = rename($s_big_dir.$imagefile , $d_big_dir.$imagefile);
+	        }
+	        
+	        return ($is_move_1 || $is_move_2 || $is_move_3);
+	    }	     
+	}
+	
+	//user , post
+	function removeThreeTypeImage( $source , $imagefile ){
+	    
+	    $s_small_dir = $source ."small/";
+	    $s_medium_dir = $source ."medium/";
+	    $s_big_dir = $source ."big/";
+	    
+	    if(is_array($imagefile)){
+	        
+	        $is_remove = false;
+	        for($i=0; $i < count($imagefile); $i++){
+	            if(file_exists($s_small_dir.$imagefile[$i]["image_name"])){
+	                $is_remove = unlink($s_small_dir.$imagefile[$i]["image_name"]);	                
+	            }
+	            if(file_exists($s_medium_dir.$imagefile[$i]["image_name"])){
+	                $is_remove = unlink($s_medium_dir.$imagefile[$i]["image_name"]);
+	            }
+	            if(file_exists($s_big_dir.$imagefile[$i]["image_name"])){
+	                $is_remove = unlink($s_big_dir.$imagefile[$i]["image_name"]);
+	            }	            
+	        }
+	        return $is_remove;
+	        
+	    }else{
+	        $is_remove_1 = false;
+	        $is_remove_2 = false;
+	        $is_remove_3 = false;
+	        
+	        if(file_exists($s_small_dir.$imagefile)){
+	            $is_remove_1 = unlink($s_small_dir.$imagefile);
+	        }
+	        
+	        if(file_exists($s_medium_dir.$imagefile)){
+	            $is_remove_2 = unlink($s_medium_dir.$imagefile);
+	        }
+	        
+	        if(file_exists($s_big_dir.$imagefile)){
+	            $is_remove_3 = unlink($s_big_dir.$imagefile);
+	        }
+	        
+	        return ($is_remove_1 || $is_remove_2 || $is_remove_3);	        
+	    }
+	}
+
 	function checkDirectory( $path ){
 	
 		$response = array();

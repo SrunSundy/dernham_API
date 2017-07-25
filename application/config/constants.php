@@ -2,6 +2,10 @@
 defined('BASEPATH') OR exit('No direct script access allowed');
 
 /*
+  Project's global variables declaration 
+ */
+define('UPLOAD_FILE_PATH', '.');
+ /*
 |--------------------------------------------------------------------------
 | Display Debug backtrace
 |--------------------------------------------------------------------------
