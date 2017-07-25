@@ -27,7 +27,7 @@ class UploadRestController extends REST_Controller{
 		}
 			
 		$request_upload["image_file"] = $_FILES;
-		$upload_target = "./uploadimages/temp/";
+		$upload_target = UPLOAD_FILE_PATH ."/uploadimages/temp/post/";
 		$response_data = $this->UploadModel->uploadSinglePostImage($request_upload, $upload_target);
 		
 		if($response_data["is_upload"]){
@@ -57,7 +57,7 @@ class UploadRestController extends REST_Controller{
 		}
 			
 		$request_upload["image_file"] = $_FILES;
-		$upload_target = "./uploadimages/temp/";
+		$upload_target = UPLOAD_FILE_PATH ."/uploadimages/temp/post/";
 		
 		$response_data = array();
 		if (is_array($_FILES["file"]["name"])){
@@ -102,7 +102,7 @@ class UploadRestController extends REST_Controller{
 		}
 			
 		$request_upload["image_file"] = $_FILES;
-		$upload_target = "./uploadimages/user/";
+		$upload_target = UPLOAD_FILE_PATH ."/uploadimages/temp/user/";
 		$response_data = $this->UploadModel->uploadUserPhoto($request_upload, $upload_target);
 		
 		if($response_data["is_upload"]){
