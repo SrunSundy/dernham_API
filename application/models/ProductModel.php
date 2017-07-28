@@ -106,6 +106,116 @@ class ProductModel extends CI_Model{
 		
 	}
 	
+	function listSearchProduct( $request ){
+	    
+	    $row = (int)$request["row"];
+	    $page = (int)$request["page"];
+	      
+	    $current_lat = (float)$request["current_lat"];
+	    $current_lng = (float)$request["current_lng"];
+	    
+	    if(!$row) $row = 10;
+	    if(!$page) $page = 1;
+	    if(!$current_lat || $current_lat > 90 || $current_lat <-90) $current_lat= 0;
+	    if(!$current_lng || $current_lng > 180 || $current_lng < -180) $current_lng= 0;
+	    
+	    $limit = $row;
+	    $offset = ($row*$page)-$row;
+	    
+	    $order_type = "  p.pro_id DESC ";
+	    
+	    $param = array();
+	    
+	    $sql = "SELECT 
+                	p.pro_id,
+                	p.pro_name_en,
+                	p.pro_name_kh,
+                	p.pro_image,
+                	p.pro_short_description,
+                	s.shop_id,
+                	s.shop_name_en,
+                	s.shop_name_kh,
+                  SQRT(POW(69.1 * (s.shop_lat_point - ? ), 2) +
+                			 POW(69.1 * (? - s.shop_lng_point) * COS(s.shop_lat_point / 57.3), 2))*1.61 AS distance
+                FROM nham_product p
+                LEFT JOIN nham_shop s ON p.shop_id = s.shop_id";
+	    
+	    $this->load->helper('validate');
+	    
+	    if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
+	        $sql .="\n LEFT JOIN nham_serve_cate_map_pro pro  ON p.pro_id = pro.pro_id ";
+	        $sql .="\n WHERE p.pro_status = 1 ";
+	        $sql .= "\n AND pro.serve_category_id = ? ";
+	        array_push($param, $current_lat , $current_lng, (int)$request["serve_category_id"]);
+	    }else{
+	        $sql .="\n WHERE p.pro_status = 1 ";
+	        array_push($param, $current_lat , $current_lng);
+	    }
+	    
+	    if( isset($request["country_id"]) && validateNumeric($request["country_id"]) ){
+	        $sql .= "\n AND p.country_id = ? ";
+	        array_push($param, (int)$request["country_id"]);
+	    }
+	    
+	    if( isset($request["city_id"]) && validateNumeric($request["city_id"]) ){
+	        $sql .= "\n AND p.country_id = ? ";
+	        array_push($param, (int)$request["city_id"]);
+	    }
+	    
+	    if( isset($request["district_id"]) && validateNumeric($request["district_id"]) ){
+	        $sql .= "\n AND p.district_id = ? ";
+	        array_push($param, (int)$request["district_id"]);
+	    }
+	    
+	    if( isset($request["commune_id"]) && validateNumeric($request["commune_id"]) ){
+	        $sql .= "\n AND p.commune_id = ? ";
+	        array_push($param, (int)$request["commune_id"]);
+	    }
+	    
+	    $sql .= "\n AND REPLACE(CONCAT_WS(p.pro_name_en, p.pro_name_kh, p.pro_serve_type ,s.shop_name_en,s.shop_name_kh, s.shop_address),' ','') LIKE REPLACE(?,' ','') ";
+	    array_push($param ,"%".$request["srch_text"]."%");
+	    	    
+	    if(isset($request["is_best_match"]) && $request["is_best_match"] == true){
+	        $order_type = " CASE  WHEN REPLACE(CONCAT_WS(p.pro_name_en, p.pro_name_kh, p.pro_serve_type ,s.shop_name_en,s.shop_name_kh, s.shop_address),' ','') = REPLACE('".$request["srch_text"]."',' ','') THEN 0
+					              WHEN REPLACE(CONCAT_WS(p.pro_name_en, p.pro_name_kh, p.pro_serve_type ,s.shop_name_en,s.shop_name_kh, s.shop_address),' ','') LIKE REPLACE('".$request["srch_text"]."%',' ','') THEN 1
+					              WHEN REPLACE(CONCAT_WS(p.pro_name_en, p.pro_name_kh, p.pro_serve_type ,s.shop_name_en,s.shop_name_kh, s.shop_address),' ','') LIKE REPLACE('%".$request["srch_text"]."%',' ','') THEN 2
+					              WHEN REPLACE(CONCAT_WS(p.pro_name_en, p.pro_name_kh, p.pro_serve_type ,s.shop_name_en,s.shop_name_kh, s.shop_address),' ','') LIKE REPLACE('%".$request["srch_text"]."',' ','') THEN 3
+					              ELSE 4
+					         END, CONCAT_WS(p.pro_name_en, p.pro_name_kh, p.pro_serve_type ,s.shop_name_en,s.shop_name_kh, s.shop_address)  ";
+	        //array_push($param ,$request["srch_text"], $request["srch_text"]."%"  ,"%".$request["srch_text"]."%", "%".$request["srch_text"]);
+	    }
+	    
+	    if(isset($request["is_latest"]) && $request["is_latest"] == true){
+	        $order_type = " p.pro_id DESC ";
+	    }
+	    
+	    if( isset($request["is_popular"]) && $request["is_popular"] == true ){
+	        $order_type = " p.pro_view_count ";
+	    }
+	    
+	    if( isset($request["is_nearby"]) && $request["is_nearby"] == true ){
+	        $order_type = " distance ";
+	    }
+	    $query_record = $this->db->query($sql , $param);
+	    $total_record = count($query_record->result());
+	    $total_page = $total_record / $row;
+	    if( ($total_record % $row) > 0){
+	        $total_page += 1;
+	    }
+	    
+	    $response["total_record"] = $total_record;
+	    $response["total_page"] = (int)$total_page;
+	    
+	    $sql .= "\n ORDER BY ".$order_type;
+	    $sql .= "\n LIMIT ? OFFSET ? ";
+	    array_push($param, $limit , $offset);
+	    
+	    $query = $this->db->query($sql , $param);
+	    $response["response_data"] = $query->result();
+	    
+	    return $response;
+	}
+	
 	function listProductByShopid( $request ){
 		
 		$row = (int)$request["row"];

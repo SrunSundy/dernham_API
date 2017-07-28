@@ -254,13 +254,10 @@ class ShopModel extends CI_Model{
 					sh.shop_close_time,
 					SQRT(POW(69.1 * (sh.shop_lat_point - ? ), 2) +
 						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
-				FROM nham_shop sh
-				LEFT JOIN nham_country cou ON cou.country_id = sh.country_id
-				LEFT JOIN nham_city city ON city.city_id = sh.city_id
-				LEFT JOIN nham_district dis ON dis.district_id = sh.district_id
-				LEFT JOIN nham_commune com ON com.commune_id = sh.commune_id ";
+				FROM nham_shop sh ";
 		
 		$this->load->helper('validate');
+		
 		if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
 			$sql .="\n LEFT JOIN nham_serve_cate_map_shop cate  ON cate.shop_id = sh.shop_id ";
 			$sql .="\n WHERE sh.shop_status = 1 ";
@@ -272,22 +269,22 @@ class ShopModel extends CI_Model{
 		}
 		
 		if( isset($request["country_id"]) && validateNumeric($request["country_id"]) ){
-			$sql .= "\n AND cou.country_id = ? ";
+			$sql .= "\n AND sh.country_id = ? ";
 			array_push($param, (int)$request["country_id"]);
 		}
 		
 		if( isset($request["city_id"]) && validateNumeric($request["city_id"]) ){
-			$sql .= "\n AND city.country_id = ? ";
+			$sql .= "\n AND sh.country_id = ? ";
 			array_push($param, (int)$request["city_id"]);
 		}
 		
 		if( isset($request["district_id"]) && validateNumeric($request["district_id"]) ){
-			$sql .= "\n AND dis.district_id = ? ";
+			$sql .= "\n AND sh.district_id = ? ";
 			array_push($param, (int)$request["district_id"]);
 		}
 		
 		if( isset($request["commune_id"]) && validateNumeric($request["commune_id"]) ){
-			$sql .= "\n AND com.commune_id = ? ";
+			$sql .= "\n AND sh.commune_id = ? ";
 			array_push($param, (int)$request["commune_id"]);
 		}
 		
