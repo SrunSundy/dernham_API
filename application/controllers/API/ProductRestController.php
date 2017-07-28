@@ -99,6 +99,65 @@ class ProductRestController extends REST_Controller{
 		$this->response($response, 200);
 	}
 	
+	public function listsearchproduct_post(){
+	    
+	    /* {
+	     "request_data" : {
+    	     "row" : 10,
+    	     "page": 1,
+    	     "serve_category_id" : 0,
+    	     "is_nearby" : false,
+    	     "is_popular" : false,
+    	     "is_latest" : false,
+    	     "is_best_match": true,
+    	     "country_id" : 0,
+    	     "city_id" : 0,
+    	     "district_id" : 0,
+    	     "commune_id" : 0,
+    	     "current_lat" : 11.565723328439192,
+    	     "current_lng" : 104.88913536071777,
+    	     "srch_text": ""
+	       }
+	     } */
+	    $request = json_decode($this->input->raw_input_stream,true);
+	    
+	    if(!isset($request["request_data"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "bad request";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    $request = $request["request_data"];
+	    
+	    if(!isset($request["row"])) $request["row"] = 10;
+	    if(!isset($request["page"])) $request["page"] = 1;
+	    if(!isset($request["current_lat"])) $request["current_lat"] = 0;
+	    if(!isset($request["current_lng"])) $request["current_lng"] = 0;
+	    if(!isset($request["srch_text"])) $request["srch_text"] = "";
+	    
+	    $responsequery = $this->ProductModel->listSearchProduct($request);
+	    $responsedata = $responsequery["response_data"];
+	    
+	    if(count($responsedata) > 0){
+	      
+	        $this->load->helper('distancecalculator');        
+	        foreach($responsedata as $item){
+	          
+	            $item->distance = distanceFormat($item->distance);
+	            //	$item->shop_display_time =  date('h:i A', strtotime($item->shop_opening_time)).' - '.date('h:i A', strtotime($item->shop_close_time));
+	            
+	            //$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($item->shop_id);
+	        }
+	    }
+	    
+	    $response["total_record"] = $responsequery["total_record"];
+	    $response["total_page"] = $responsequery["total_page"];
+	    $response["response_code"] = "200";
+	    $response["response_data"] = $responsedata;
+	    
+	    $this->response($response, 200);
+	}
+	
 	
 }
 

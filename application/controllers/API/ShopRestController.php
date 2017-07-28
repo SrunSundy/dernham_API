@@ -262,7 +262,7 @@ class ShopRestController extends REST_Controller{
 		$responsedata = $responsequery["response_data"];
 		
 		if(count($responsedata) > 0){
-			$this->load->model('ServeCategoryModel');
+			//$this->load->model('ServeCategoryModel');
 			$this->load->helper('distancecalculator');
 				
 			foreach($responsedata as $item){
@@ -279,8 +279,9 @@ class ShopRestController extends REST_Controller{
 				}
 				$item->is_shop_open = $is_open;
 				$item->distance = distanceFormat($item->distance);
+			//	$item->shop_display_time =  date('h:i A', strtotime($item->shop_opening_time)).' - '.date('h:i A', strtotime($item->shop_close_time));
 		
-				$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($item->shop_id);
+			//	$item->serve_category = $this->ServeCategoryModel->listServeCategoryByShopid($item->shop_id);
 			}
 		}
 		

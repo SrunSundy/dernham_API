@@ -10,7 +10,7 @@ if ( ! function_exists('validateNumeric'))
 	}
 }
 
-if ( ! function_exists('validateNumeric'))
+if ( ! function_exists('validateString'))
 {
 	function validateString( $param ){
 		if($param != null){
