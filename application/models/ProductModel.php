@@ -32,44 +32,41 @@ class ProductModel extends CI_Model{
 					pro.pro_price,
 					pro.pro_promote_price,
 					pro.pro_short_description,
-					pro.shop_id,
-					pro.shop_name_en,
-					pro.shop_name_kh
+					s.shop_id,
+					s.shop_name_en,
+					s.shop_name_kh
 					
-				FROM nham_product pro
-				LEFT JOIN nham_country cou ON cou.country_id = pro.country_id
-				LEFT JOIN nham_city city ON city.city_id = pro.city_id
-				LEFT JOIN nham_district dis ON dis.district_id = pro.district_id
-				LEFT JOIN nham_commune com ON com.commune_id = pro.commune_id ";
+				FROM nham_product pro 
+                LEFT JOIN nham_shop s ON pro.shop_id = s.shop_id ";
 		
 		$this->load->helper('validate');
 		if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
 			$sql .="\n LEFT JOIN nham_serve_cate_map_shop cate  ON cate.shop_id = sh.shop_id ";
-			$sql .="\n WHERE pro.pro_status = 1 ";
+			$sql .="\n WHERE pro.pro_status = 1 AND s.shop_status = 1 ";
 			$sql .= "\n AND cate.serve_category_id = ? ";
 			array_push($param, (int)$request["serve_category_id"]);
 		}else{
-			$sql .="\n WHERE pro.pro_status = 1 ";
+			$sql .="\n WHERE pro.pro_status = 1 AND s.shop_status = 1 ";
 			
 		}
 		
 		if( isset($request["country_id"]) && validateNumeric($request["country_id"]) ){
-			$sql .= "\n AND cou.country_id = ? ";
+			$sql .= "\n AND s.country_id = ? ";
 			array_push($param, (int)$request["country_id"]);
 		}
 		
 		if( isset($request["city_id"]) && validateNumeric($request["city_id"]) ){
-			$sql .= "\n AND city.country_id = ? ";
+			$sql .= "\n AND s.country_id = ? ";
 			array_push($param, (int)$request["city_id"]);
 		}
 		
 		if( isset($request["district_id"]) && validateNumeric($request["district_id"]) ){
-			$sql .= "\n AND dis.district_id = ? ";
+			$sql .= "\n AND s.district_id = ? ";
 			array_push($param, (int)$request["district_id"]);
 		}
 		
 		if( isset($request["commune_id"]) && validateNumeric($request["commune_id"]) ){
-			$sql .= "\n AND com.commune_id = ? ";
+			$sql .= "\n AND s.commune_id = ? ";
 			array_push($param, (int)$request["commune_id"]);
 		}
 		
@@ -144,31 +141,31 @@ class ProductModel extends CI_Model{
 	    
 	    if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
 	        $sql .="\n LEFT JOIN nham_serve_cate_map_pro pro  ON p.pro_id = pro.pro_id ";
-	        $sql .="\n WHERE p.pro_status = 1 ";
+	        $sql .="\n WHERE p.pro_status = 1 AND s.shop_status = 1 ";
 	        $sql .= "\n AND pro.serve_category_id = ? ";
 	        array_push($param, $current_lat , $current_lng, (int)$request["serve_category_id"]);
 	    }else{
-	        $sql .="\n WHERE p.pro_status = 1 ";
+	        $sql .="\n WHERE p.pro_status = 1 AND s.shop_status = 1 ";
 	        array_push($param, $current_lat , $current_lng);
 	    }
 	    
 	    if( isset($request["country_id"]) && validateNumeric($request["country_id"]) ){
-	        $sql .= "\n AND p.country_id = ? ";
+	        $sql .= "\n AND s.country_id = ? ";
 	        array_push($param, (int)$request["country_id"]);
 	    }
 	    
 	    if( isset($request["city_id"]) && validateNumeric($request["city_id"]) ){
-	        $sql .= "\n AND p.country_id = ? ";
+	        $sql .= "\n AND s.country_id = ? ";
 	        array_push($param, (int)$request["city_id"]);
 	    }
 	    
 	    if( isset($request["district_id"]) && validateNumeric($request["district_id"]) ){
-	        $sql .= "\n AND p.district_id = ? ";
+	        $sql .= "\n AND s.district_id = ? ";
 	        array_push($param, (int)$request["district_id"]);
 	    }
 	    
 	    if( isset($request["commune_id"]) && validateNumeric($request["commune_id"]) ){
-	        $sql .= "\n AND p.commune_id = ? ";
+	        $sql .= "\n AND s.commune_id = ? ";
 	        array_push($param, (int)$request["commune_id"]);
 	    }
 	    
