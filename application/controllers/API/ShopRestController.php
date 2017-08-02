@@ -218,6 +218,7 @@ class ShopRestController extends REST_Controller{
 		    $this->load->helper('distancecalculator');		    
 		    foreach($responsedata as $item){		       
 		        $item->distance = distanceFormat($item->distance);
+		        $item->display_time =  date('h:i A', strtotime($item->shop_opening_time))." - ".date('h:i A', strtotime($item->shop_close_time)) ;
 		    }
 		}		
 		$response["response_code"] = "200";		

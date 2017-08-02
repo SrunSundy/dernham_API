@@ -265,6 +265,55 @@ class ProductModel extends CI_Model{
 		return $response;
 	}
 	
+	function listPopularProduct( $request ){
+	    
+	    $row = (int)$request["row"];
+	    $page = (int)$request["page"];
+	    $current_lat = (float)$request["current_lat"];
+	    $current_lng = (float)$request["current_lng"];
+	    
+	    if(!$row) $row = 10;
+	    if(!$page) $page = 1;
+	    if(!$current_lat || $current_lat > 90 || $current_lat <-90) $current_lat= 0;
+	    if(!$current_lng || $current_lng > 180 || $current_lng < -180) $current_lng= 0;
+	    
+	    $limit = $row;
+	    $offset = ($row*$page)-$row;
+	    
+	    $sql = "SELECT 
+                	p.pro_id,
+                	p.pro_image,
+                	p.pro_name_en,
+                	p.pro_name_kh,
+                	p.pro_short_description,
+                	s.shop_id,
+                	s.shop_name_en,
+                	s.shop_name_kh,
+                	SQRT(POW(69.1 * (s.shop_lat_point - ? ), 2) +
+                        POW(69.1 * (? - s.shop_lng_point) * COS(s.shop_lat_point / 57.3), 2))*1.61 AS distance
+                FROM nham_product p
+                LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
+                ORDER BY p.pro_dis_order ,p.pro_view_count DESC, p.pro_local_popularity DESC ";
+	    
+	    $query_record = $this->db->query($sql ,  array($current_lat, $current_lng));
+	    $total_record = count($query_record->result());
+	    $total_page = $total_record / $row;
+	    if( ($total_record % $row) > 0){
+	        $total_page += 1;
+	    }
+	    
+	    $response["total_record"] = $total_record;
+	    $response["total_page"] = (int)$total_page;
+	    
+	    $sql .= " LIMIT ? OFFSET ? ";
+	    
+	    $query = $this->db->query($sql , array($current_lat, $current_lng, $limit, $offset));
+	    $response["response_data"] = $query->result();
+	    
+	    return $response;
+	    
+	}
+	
 	function listPopularProByShopid( $shop_id , $limit){
 		
 		$sql = "SELECT 

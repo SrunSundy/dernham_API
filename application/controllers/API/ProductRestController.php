@@ -158,6 +158,33 @@ class ProductRestController extends REST_Controller{
 	    $this->response($response, 200);
 	}
 	
+	public function listpopularproduct_get(){
+	    
+	    //current_lat=11.565723328439&
+	    //current_lng=104.889135360&
+	    //row=20&
+	    //page=2
+	    $request["current_lat"] = $this->input->get('current_lat');
+	    $request["current_lng"] = $this->input->get('current_lng');
+	    $request["row"] = $this->input->get('row');
+	    $request["page"] = $this->input->get('page');
+	    
+	    $responsequery = $this->ProductModel->listPopularProduct($request);
+	    
+	    $responsedata = $responsequery["response_data"];
+	    if(count($responsedata) > 0){
+	        
+	        $this->load->helper('distancecalculator');
+	        foreach($responsedata as $item){
+	            $item->distance = distanceFormat($item->distance);
+	        }
+	    }
+	    $response["response_code"] = "200";
+	    $response["total_record"] = $responsequery["total_record"];
+	    $response["total_page"] = $responsequery["total_page"];
+	    $response["response_data"] = $responsedata;
+	    $this->response($response, 200);
+	}
 	
 }
 
