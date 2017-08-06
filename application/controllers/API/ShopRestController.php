@@ -43,7 +43,8 @@ class ShopRestController extends REST_Controller{
 				"district_id" : 0,
 				"commune_id" : 0,
 				"current_lat" : 11.565723328439192,
-				"current_lng" : 104.88913536071777
+				"current_lng" : 104.88913536071777,
+				"user_id" : 0
 			}
 		} */
 		$request = json_decode($this->input->raw_input_stream,true);
@@ -116,6 +117,10 @@ class ShopRestController extends REST_Controller{
 		
 					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
 				}
+				
+				$request_is_bookmarked["shop_id"] = $item->shop_id;
+				$request_is_bookmarked["user_id"] = (isset($request["user_id"])) ? $request["user_id"] : 0;
+				$item->is_saved = $this->ShopModel->isUserBookmarked($request_is_bookmarked)->is_saved;
 			
 			}
 		}
@@ -308,6 +313,7 @@ class ShopRestController extends REST_Controller{
 		/* {
 			"request_data" : {
 			"shop_id" : 1,
+			"user_id" : 0,
 			"current_lat" : 11.565723328439192,
 			"current_lng" : 104.88913536071777
 			}
@@ -372,6 +378,11 @@ class ShopRestController extends REST_Controller{
 			$item->is_shop_open = $is_open;
 			$item->time_to_close = $time_to_close;
 			$item->time_to_open = $time_to_open;
+			
+			$request_is_bookmarked["shop_id"] = $shop_id;
+			$request_is_bookmarked["user_id"] = (isset($request["user_id"])) ? $request["user_id"] : 0;
+			$item->is_saved = $this->ShopModel->isUserBookmarked($request_is_bookmarked)->is_saved;
+			
 			$item->product_average_price = number_format((float)$item->product_average_price, 2, '.', '');
 			if($item->shop_phone){
 				$item->shop_phone = explode("|",$item->shop_phone);
@@ -400,15 +411,18 @@ class ShopRestController extends REST_Controller{
 			$item->shop_related_img["data"] = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
 				
 			$request_pro["shop_id"] = $shop_id;
-			$request_pro["is_popular"] = true ;
+			$request_pro["is_popular"] = false ;
 			$request_pro["page"] = 1 ;
-			$request_pro["row"] = 6;
+			$request_pro["row"] = 10;
 			
 			$request_pro_cnt["shop_id"] = $shop_id;
 			$shop_popular_product = $this->ProductModel->listProductByShopid($request_pro);
 			$item->shop_popular_product["total_record"] = $this->ProductModel->getTotalProduct($request_pro_cnt)->total_record;
 			$item->shop_popular_product["data"] = $shop_popular_product["response_data"];
+			$item->shop_popular_product["total_page"] = $shop_popular_product["total_page"];
 			
+			//==================not yet need related shops=============
+			/*
 			$item->shop_branch = [];
 			if($item->branch_id != null && $item->branch_id != "" && $item->branch_id > 0 ){
 				$branch_request["shop_id"] = $shop_id;
@@ -421,6 +435,8 @@ class ShopRestController extends REST_Controller{
 				$item->shop_branch["total_record"] = $shop_branch["total_record"];				
 				$item->shop_branch["data"] = $shop_branch["response_data"];
 			}
+			*/
+			
 		}
 		
 		
@@ -457,6 +473,95 @@ class ShopRestController extends REST_Controller{
 		$response["response_data"] = $this->ShopModel->listShopRelatedBranch($request);
 		
 		$this->response($response, 200);
+	}
+	
+	public function saveshop_post(){
+		
+		/* {
+			 "request_data" : {
+				"shop_id" : 1,
+				"user_id" : 0
+			}
+		} */
+		$request = json_decode($this->input->raw_input_stream,true);	
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+		if(!isset($request["shop_id"]) || !validateNumeric($request["shop_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "invalid shop_id";
+			$this->response($response, 400);
+			die();
+		}
+		
+		if(!isset($request["user_id"]) || !validateNumeric($request["user_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "invalid user_id";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$is_inserted = $this->ShopModel->savePlace($request);
+		
+		if($is_inserted){
+			$response["response_code"] = "200";
+			$response["response_msg"] = "saved successfully";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "save failed!";
+			$this->response($response ,200);
+		}
+		
+	}
+	
+	public function unsaveshop_post(){
+		/* {
+		  "request_data" : {
+			"shop_id" : 1,
+			"user_id" : 0
+			}
+		} */
+		$request = json_decode($this->input->raw_input_stream,true);
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+		if(!isset($request["shop_id"]) || !validateNumeric($request["shop_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "invalid shop_id";
+			$this->response($response, 400);
+			die();
+		}
+		
+		if(!isset($request["user_id"]) || !validateNumeric($request["user_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "invalid user_id";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$status  = $this->ShopModel->unSavePlace($request); 
+		if($status){
+			$response["response_code"] = "200";
+			$response["response_msg"] = "unsaved successfully";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "save failed!";
+			$this->response($response ,200);
+		}
 	}
 	
 	public function createshop_post(){

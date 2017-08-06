@@ -280,20 +280,35 @@ class UserModel extends CI_Model{
 	
 	function savePost($request){
 	
-		$sql = "INSERT INTO nham_saved_post(post_id, user_id) VALUES(?, ?)";
-		$param["post_id"] = $request["post_id"];
+		$sql = "INSERT INTO nham_saved_post( object_id, user_id, saved_type ,created_date )
+				SELECT 
+					?,
+					?,
+					?,
+					?
+				FROM dual
+				WHERE 
+				( SELECT count(*) FROM nham_saved_post WHERE object_id = ? AND user_id = ? ) < 1 ";
+		$param["object_id"] = $request["object_id"];
 		$param["user_id"] = $request["user_id"];
+		$param["saved_type"] = "post";
+		
+		$now = new DateTime();
+		$param["created_date"] = strtotime($now->format('yyyy-mm-dd H:i:s'));
+		$param["object_id_1"] = $request["object_id"];
+		$param["user_id_1"] = $request["user_id"];
 		
 		$query = $this->db->query($sql , $param);
 		
-		return ($this->db->affected_rows() != 1) ? false : true;
+		return $query;
 		
 	}
 	
 	function unsavedPost($request){
-		$sql = "DELETE from nham_saved_post where user_id = ? and post_id = ?";
+		$sql = "DELETE from nham_saved_post where user_id = ? and object_id = ? and saved_type = ?";
 		$param["user_id"] = $request["user_id"];
-		$param["post_id"] = $request["post_id"];
+		$param["object_id"] = $request["object_id"];
+		$param["saved_type"] = $request["saved_type"];
 		
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;

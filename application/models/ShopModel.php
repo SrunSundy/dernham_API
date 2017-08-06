@@ -469,6 +469,49 @@ class ShopModel extends CI_Model{
 		return ($this->db->affected_rows() != 1) ? false : true;
 	}
 	
+	function isUserBookmarked( $request ){
+		
+		$sql = "SELECT count(*) AS is_saved
+			FROM nham_saved_shop WHERE shop_id = ? AND user_id = ? ";
+			
+		$param["shop_id"] = $request["shop_id"];
+		$param["user_id"] = $request["user_id"]; 
+		$query = $this->db->query($sql, $param);
+		return $query->row();
+	}
+	
+	function savePlace( $request ){
+		
+		$sql = "INSERT INTO nham_saved_shop( shop_id, user_id, created_date )
+				SELECT 
+					?,
+					?,
+					?
+				FROM dual
+				WHERE 
+				( SELECT count(*) FROM nham_saved_shop WHERE shop_id = ? AND user_id = ? ) < 1 ";
+		$param["shop_id"] = (int)$request["shop_id"];
+		$param["user_id"] = (int)$request["user_id"];
+		
+		$now = new DateTime();
+		$param["created_date"] =  strtotime($now->format('yyyy-mm-dd H:i:s'));
+		$param["shop_id_1"] = (int)$request["shop_id"];
+		$param["user_id_1"] = (int)$request["user_id"];
+		
+		$query = $this->db->query($sql , $param);
+		return $query;
+	}
+	
+	function unSavePlace( $request ){
+		
+		$sql = "DELETE FROM nham_saved_shop WHERE shop_id = ? AND user_id = ?";
+		$param["shop_id"] = $request["shop_id"];
+		$param["user_id"] = $request["user_id"];
+		
+		$query = $this->db->query($sql , $param);
+		return $query;
+		
+	}
 	
 	
 
