@@ -118,9 +118,9 @@ class ShopRestController extends REST_Controller{
 					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
 				}
 				
-				$request_is_bookmarked["shop_id"] = $item->shop_id;
+				/*$request_is_bookmarked["shop_id"] = $item->shop_id;
 				$request_is_bookmarked["user_id"] = (isset($request["user_id"])) ? $request["user_id"] : 0;
-				$item->is_saved = $this->ShopModel->isUserBookmarked($request_is_bookmarked)->is_saved;
+				$item->is_saved = $this->ShopModel->isUserBookmarked($request_is_bookmarked)->is_saved;*/
 			
 			}
 		}
@@ -280,7 +280,7 @@ class ShopRestController extends REST_Controller{
 			$this->load->helper('distancecalculator');
 				
 			foreach($responsedata as $item){
-				if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
+				/*if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
 					$item->shop_time_zone = "Asia/Phnom_Penh";
 				}
 				$now = new DateTime($item->shop_time_zone);
@@ -291,7 +291,7 @@ class ShopRestController extends REST_Controller{
 				if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
 					$is_open = 1;
 				}
-				$item->is_shop_open = $is_open;
+				$item->is_shop_open = $is_open;*/
 				$item->distance = distanceFormat($item->distance);
 			//	$item->shop_display_time =  date('h:i A', strtotime($item->shop_opening_time)).' - '.date('h:i A', strtotime($item->shop_close_time));
 		
@@ -379,10 +379,10 @@ class ShopRestController extends REST_Controller{
 			$item->time_to_close = $time_to_close;
 			$item->time_to_open = $time_to_open;
 			
-			$request_is_bookmarked["shop_id"] = $shop_id;
+			/*$request_is_bookmarked["shop_id"] = $shop_id;
 			$request_is_bookmarked["user_id"] = (isset($request["user_id"])) ? $request["user_id"] : 0;
 			$item->is_saved = $this->ShopModel->isUserBookmarked($request_is_bookmarked)->is_saved;
-			
+			*/
 			$item->product_average_price = number_format((float)$item->product_average_price, 2, '.', '');
 			if($item->shop_phone){
 				$item->shop_phone = explode("|",$item->shop_phone);
@@ -562,6 +562,94 @@ class ShopRestController extends REST_Controller{
 			$response["response_msg"] = "save failed!";
 			$this->response($response ,200);
 		}
+	}
+	
+	public function likeplace_post(){
+	    
+	    /* {
+	     "request_data" : {
+	     "shop_id" : 1,
+	     "user_id" : 0
+	     }
+	     } */
+	    $request = json_decode($this->input->raw_input_stream,true);
+	    if(!isset($request["request_data"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "bad request";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    $request = $request["request_data"];
+	    $this->load->helper('validate');
+	    if(!isset($request["shop_id"]) || !validateNumeric($request["shop_id"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "invalid shop_id";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    if(!isset($request["user_id"]) || !validateNumeric($request["user_id"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "invalid user_id";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    $is_inserted = $this->ShopModel->likePlace($request);
+	    
+	    if($is_inserted){
+	        $response["response_code"] = "200";
+	        $response["response_msg"] = "liked successfully";
+	        $this->response($response ,200);
+	    }else{
+	        $response["response_code"] = "000";
+	        $response["response_msg"] = "like failed!";
+	        $this->response($response ,200);
+	    }
+	}
+	
+	public function unlikeplace_post(){
+	    /* {
+	     "request_data" : {
+	     "shop_id" : 1,
+	     "user_id" : 0
+	     }
+	     } */
+	    $request = json_decode($this->input->raw_input_stream,true);
+	    if(!isset($request["request_data"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "bad request";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    $request = $request["request_data"];
+	    $this->load->helper('validate');
+	    if(!isset($request["shop_id"]) || !validateNumeric($request["shop_id"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "invalid shop_id";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    if(!isset($request["user_id"]) || !validateNumeric($request["user_id"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "invalid user_id";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    $status  = $this->ShopModel->unLikePlace($request);
+	    if($status){
+	        $response["response_code"] = "200";
+	        $response["response_msg"] = "unliked successfully";
+	        $this->response($response ,200);
+	    }else{
+	        $response["response_code"] = "000";
+	        $response["response_msg"] = "unlike failed!";
+	        $this->response($response ,200);
+	    }
 	}
 	
 	public function createshop_post(){

@@ -24,6 +24,8 @@ class ShopModel extends CI_Model{
 		$limit = $row;
 		$offset = ($row*$page)-$row;
 		$order_type = " sh.shop_id DESC ";
+		
+		$user_id = (isset($request["user_id"])) ? $request["user_id"] : 0;
 			
 		$param = array();
 		$sql = "SELECT sh.shop_id,
@@ -36,6 +38,9 @@ class ShopModel extends CI_Model{
 						sh.shop_opening_time,
 						sh.shop_close_time,
 						sh.shop_has_detail_img,
+                        (SELECT count(*) AS liked_cnt FROM nham_shop_like WHERE shop_id = sh.shop_id ) AS liked_cnt,
+                        (SELECT count(*) AS is_saved FROM nham_saved_shop WHERE shop_id = sh.shop_id AND user_id = ?) AS is_saved,
+                        (SELECT count(*) AS is_liked FROM nham_shop_like WHERE shop_id= sh.shop_id AND user_id = ? ) AS is_liked,
 						SQRT(
 						POW(69.1 * (sh.shop_lat_point - ? ), 2) +
 						POW(69.1 * ( ? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
@@ -51,7 +56,7 @@ class ShopModel extends CI_Model{
 		}	
 			
 		$sql .="\n WHERE sh.shop_status = 1 ";		
-		array_push($param, $current_lat , $current_lng);
+		array_push($param, $user_id, $user_id ,$current_lat , $current_lng);
 		
 		if( isset($request["country_id"]) && validateNumeric($request["country_id"]) ){
 			$sql .= "\n AND cou.country_id = ? ";
@@ -79,7 +84,7 @@ class ShopModel extends CI_Model{
 		}
 		
 		if( isset($request["is_popular"]) && $request["is_popular"] == true ){
-			$order_type = " sh.shop_dis_order asc,sh.shop_view_count desc ";
+			$order_type = " sh.shop_dis_order asc, liked_cnt desc ,sh.shop_view_count desc ";
 		}
 		
 		if( isset($request["is_nearby"]) && $request["is_nearby"] == true ){			
@@ -201,11 +206,12 @@ class ShopModel extends CI_Model{
 					sh.shop_time_zone,
 					sh.shop_opening_time,
 					sh.shop_close_time,
+                     (SELECT count(*) AS liked_cnt FROM nham_shop_like WHERE shop_id = sh.shop_id ) AS liked_cnt,
 					SQRT(POW(69.1 * (sh.shop_lat_point - ? ), 2) +
 						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
 				FROM nham_shop sh
 				WHERE sh.shop_status = 1
-				ORDER by sh.shop_dis_order asc,sh.shop_view_count desc ";
+				ORDER by sh.shop_dis_order asc, liked_cnt desc ,sh.shop_view_count desc ";
 		
 		$query_record = $this->db->query($sql ,  array($current_lat, $current_lng));
 		$total_record = count($query_record->result());
@@ -249,9 +255,6 @@ class ShopModel extends CI_Model{
 					sh.shop_name_kh,
 					sh.shop_logo,
 					sh.shop_address,
-					sh.shop_time_zone,
-					sh.shop_opening_time,
-					sh.shop_close_time,
 					SQRT(POW(69.1 * (sh.shop_lat_point - ? ), 2) +
 						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
 				FROM nham_shop sh ";
@@ -341,6 +344,8 @@ class ShopModel extends CI_Model{
 		
 		if(!$current_lat || $current_lat > 90 || $current_lat <-90) $current_lat= 0;
 		if(!$current_lng || $current_lng > 180 || $current_lng < -180) $current_lng= 0;
+		
+		$user_id = (isset($request["user_id"])) ? $request["user_id"] : 0;
 			
 		$sql = "SELECT 
 					sh.branch_id,
@@ -361,13 +366,16 @@ class ShopModel extends CI_Model{
 					sh.shop_view_count,
 					sh.shop_social_media,
 					sh.shop_time_zone,
+                    (SELECT count(*) AS liked_cnt FROM nham_shop_like WHERE shop_id = sh.shop_id ) AS liked_cnt,
+                    (SELECT count(*) AS is_saved FROM nham_saved_shop WHERE shop_id = sh.shop_id AND user_id = ?) AS is_saved,
+                    (SELECT count(*) AS is_liked FROM nham_shop_like WHERE shop_id= sh.shop_id AND user_id = ? ) AS is_liked,
 					SQRT(
 						POW(69.1 * (sh.shop_lat_point - ? ), 2) +
 						POW(69.1 * ( ? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
 				FROM nham_shop sh
 				WHERE sh.shop_status = 1
 				AND sh.shop_id = ?";
-		$query = $this->db->query($sql , array($current_lat, $current_lng, $shop_id));
+		$query = $this->db->query($sql , array($user_id, $user_id, $current_lat, $current_lng, $shop_id));
 		$response = $query->row();
 			
 		return $response;
@@ -445,10 +453,8 @@ class ShopModel extends CI_Model{
 					shop_status,
 					shop_time_zone,
 					shop_lat_point,
-					shop_lng_point,
-					shop_phone,
-					shop_short_description
-				)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+					shop_lng_point
+				)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		$param["shop_name_en"] = $request["shop_name_en"];
 		$param["shop_name_kh"] = $request["shop_name_kh"];
 		$param["shop_logo"] = $request["shop_logo"];
@@ -463,13 +469,11 @@ class ShopModel extends CI_Model{
 		$param["shop_time_zone"] = (!isset($request["shop_time_zone"])) ? "Asia/Phnom_Penh" : $request["shop_time_zone"];
 		$param["shop_lat_point"] = $request["shop_lat_point"];
 		$param["shop_lng_point"] = $request["shop_lng_point"];
-		$param["shop_phone"] = $request["shop_phone"];
-		$param["shop_short_des"] = $request["shop_short_des"];
 		$query = $this->db->query($sql , $param);		
 		return ($this->db->affected_rows() != 1) ? false : true;
 	}
 	
-	function isUserBookmarked( $request ){
+	/*function isUserBookmarked( $request ){
 		
 		$sql = "SELECT count(*) AS is_saved
 			FROM nham_saved_shop WHERE shop_id = ? AND user_id = ? ";
@@ -478,7 +482,7 @@ class ShopModel extends CI_Model{
 		$param["user_id"] = $request["user_id"]; 
 		$query = $this->db->query($sql, $param);
 		return $query->row();
-	}
+	}*/
 	
 	function savePlace( $request ){
 		
@@ -493,8 +497,9 @@ class ShopModel extends CI_Model{
 		$param["shop_id"] = (int)$request["shop_id"];
 		$param["user_id"] = (int)$request["user_id"];
 		
-		$now = new DateTime();
-		$param["created_date"] =  strtotime($now->format('yyyy-mm-dd H:i:s'));
+		$current_time = new DateTime();
+		$current_time = $current_time->format('Y-m-d H:i:s');
+		$param["created_date"] =  $current_time;
 		$param["shop_id_1"] = (int)$request["shop_id"];
 		$param["user_id_1"] = (int)$request["user_id"];
 		
@@ -511,6 +516,38 @@ class ShopModel extends CI_Model{
 		$query = $this->db->query($sql , $param);
 		return $query;
 		
+	}
+	
+	function likePlace($request){
+	    
+	    $sql = "INSERT INTO nham_shop_like(shop_id , user_id, created_date)
+                SELECT ?,
+                    ?,
+                    ?
+                FROM dual
+                WHERE
+                ( SELECT count(*) FROM nham_shop_like WHERE shop_id = ? AND user_id = ? ) < 1";
+	    $param["shop_id"] = (int)$request["shop_id"];
+	    $param["user_id"] = (int)$request["user_id"];
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    $param["created_date"] =  $current_time;
+	    $param["shop_id_1"] = (int)$request["shop_id"];
+	    $param["user_id_1"] = (int)$request["user_id"];
+	    
+	    $query = $this->db->query($sql , $param);
+	    return $query;
+	}
+	
+	function unLikePlace($request){
+	    
+	    $sql = "DELETE FROM nham_shop_like WHERE shop_id = ? AND user_id = ?";
+	    $param["shop_id"] = $request["shop_id"];
+	    $param["user_id"] = $request["user_id"];
+	    
+	    $query = $this->db->query($sql , $param);
+	    return $query;
 	}
 	
 	
