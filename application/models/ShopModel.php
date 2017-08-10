@@ -550,6 +550,57 @@ class ShopModel extends CI_Model{
 	    return $query;
 	}
 	
+	function listSavedShop( $request ){
+	    
+	    $row = (int)$request["row"];
+	    $page = (int)$request["page"];
+	    
+	    if(!$row) $row = 10;
+	    if(!$page) $page = 1;
+	  
+	    $limit = $row;
+	    $offset = ($row*$page)-$row;
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    
+	    $param = array();
+	    $sql = "SELECT 
+                	sh.shop_id,
+                	sh.shop_name_en,
+                	sh.shop_name_kh,
+                	sh.shop_address,
+                	sh.shop_logo,
+                	(SELECT count(*) FROM nham_shop_like WHERE shop_id = sh.shop_id) AS cnt_like,
+                	ss.created_date
+                	
+                FROM nham_shop sh
+                INNER JOIN nham_saved_shop ss
+                ON ss.shop_id = sh.shop_id
+                WHERE ss.user_id = ?
+                AND ss.created_date BETWEEN '".$current_time."' - INTERVAL ? DAY AND '".$current_time."' - INTERVAL ? DAY ";
+	    
+	    array_push($param , $request["user_id"], $request["end_duration"],  $request["start_duration"]  );
+	    
+	    $query_record = $this->db->query($sql , $param);
+	    $total_record = count($query_record->result());
+	    $total_page = $total_record / $row;
+	    if( ($total_record % $row) > 0){
+	        $total_page += 1;
+	    }
+	    
+	    $response["total_record"] = $total_record;
+	    $response["total_page"] = (int)$total_page;
+	    
+	    $sql .= " ORDER BY ss.created_date DESC
+				  LIMIT ? OFFSET ? ";
+	    array_push($param , $limit, $offset);
+	    
+	    $query = $this->db->query($sql , $param);
+	    $response["response_data"] = $query->result();
+	    
+	    return $response;
+	}
+	
 	
 
 }

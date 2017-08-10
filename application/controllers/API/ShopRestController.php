@@ -111,11 +111,33 @@ class ShopRestController extends REST_Controller{
 					$this->load->helper('yesnoimagefrontshow');
 					
 					$request_img["shop_id"] = $item->shop_id;
-					$request_img["limit"] = 6 ; 
+					$request_img["row"] = 3 ; 
 					$request_img["img_type"] = imagetype::Detail;
 					$request_img["is_front_show"] = yesnoimagefrontshow::YES;
 		
-					$item->shop_img = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
+					$shImg = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
+					
+					
+					$imgCnt = count($item->shop_img);
+					
+					if($imgCnt < 3){
+					    
+					    $request_img["row"] = 1 ;
+					    $request_img["is_front_show"] = yesnoimagefrontshow::NO;
+					    
+					    if($imgCnt < 1){
+					        $request_img["row"] = 3 ;
+					        $request_img["is_front_show"] = yesnoimagefrontshow::NO;
+					    }else if($imgCnt < 2){
+					        $request_img["row"] = 2 ;
+					        $request_img["is_front_show"] = yesnoimagefrontshow::NO;
+					    }				      
+					       
+					    $extra = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
+					    $shImg = array_merge($shImg , $extra);
+					}	
+					
+					$item->shop_img = $shImg;
 				}
 				
 				/*$request_is_bookmarked["shop_id"] = $item->shop_id;
@@ -740,6 +762,48 @@ class ShopRestController extends REST_Controller{
 		
 		$this->response($response, 200);
 		
+	}
+	
+	public function listsavedshop_get(){
+	    
+	    //user_id = 2
+	    //start_duration = 0 
+	    //end_duration = 0
+	    //row = 10
+	    //page = 1
+	    
+	    /*
+	     * TODAY start_durtion 0  and end_duration 1
+	     * PAST WEEK start_duration 0 and end_duration 1*/
+	    
+	    $request["user_id"] = $this->input->get('user_id');
+	    $request["start_duration"] = $this->input->get('start_duration');
+	    $request["end_duration"] = $this->input->get('end_duration');
+	    $request["row"] = $this->input->get("row");
+	    $request["page"] = $this->input->get("page");
+	    
+	    $this->load->helper('validate');
+	    if(!isset($request["user_id"]) || !validateNumeric($request["user_id"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "invalid user_id";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    if(!isset($request["start_duration"]) || !isset($request["end_duration"])){
+	        $request["start_duration"] = 0;
+	        $request["end_duration"] = 1;
+	    }else{
+	        if((int)$request["start_duration"] < 0) $request["start_duration"] = 0;
+	        if((int)$request["end_duration"] > 100000) $request["end_duration"] = 99999;
+	    }
+	    $response["response_code"] = "200";
+	    $data = $this->ShopModel->listSavedShop($request);
+	    $response["total_record"] = $data["total_record"];
+	    $response["total_page"] = $data["total_page"];
+	    $response["response_data"] = $data["response_data"];
+	    
+	    $this->response($response, 200);
 	}
 	
 }
