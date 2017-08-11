@@ -560,8 +560,7 @@ class ShopModel extends CI_Model{
 	  
 	    $limit = $row;
 	    $offset = ($row*$page)-$row;
-	    $current_time = new DateTime();
-	    $current_time = $current_time->format('Y-m-d H:i:s');
+	   
 	    
 	    $param = array();
 	    $sql = "SELECT 
@@ -576,11 +575,17 @@ class ShopModel extends CI_Model{
                 FROM nham_shop sh
                 INNER JOIN nham_saved_shop ss
                 ON ss.shop_id = sh.shop_id
-                WHERE ss.user_id = ?
-                AND ss.created_date BETWEEN '".$current_time."' - INTERVAL ? DAY AND '".$current_time."' - INTERVAL ? DAY ";
+                WHERE ss.user_id = ? ";
 	    
-	    array_push($param , $request["user_id"], $request["end_duration"],  $request["start_duration"]  );
-	    
+	    if(isset($request["start_duration"]) && isset($request["end_duration"])){
+	       $current_time = new DateTime();
+	       $current_time = $current_time->format('Y-m-d H:i:s');
+	       $sql .= " AND ss.created_date BETWEEN '".$current_time."' - INTERVAL ? DAY AND '".$current_time."' - INTERVAL ? DAY ";
+	       array_push($param , $request["user_id"], $request["end_duration"],  $request["start_duration"]);
+	    }else{
+	       array_push($param , $request["user_id"]);
+	    }
+               
 	    $query_record = $this->db->query($sql , $param);
 	    $total_record = count($query_record->result());
 	    $total_page = $total_record / $row;

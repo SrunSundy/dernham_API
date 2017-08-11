@@ -767,6 +767,7 @@ class ShopRestController extends REST_Controller{
 	public function listsavedshop_get(){
 	    
 	    //user_id = 2
+	    //user_timezone = Asia/Phnom_Penh
 	    //start_duration = 0 
 	    //end_duration = 0
 	    //row = 10
@@ -777,6 +778,7 @@ class ShopRestController extends REST_Controller{
 	     * PAST WEEK start_duration 0 and end_duration 1*/
 	    
 	    $request["user_id"] = $this->input->get('user_id');
+	    $request["user_timezone"] = $this->input->get('user_timezone');
 	    $request["start_duration"] = $this->input->get('start_duration');
 	    $request["end_duration"] = $this->input->get('end_duration');
 	    $request["row"] = $this->input->get("row");
@@ -790,18 +792,38 @@ class ShopRestController extends REST_Controller{
 	        die();
 	    }
 	    
-	    if(!isset($request["start_duration"]) || !isset($request["end_duration"])){
+	    /*if(!isset($request["start_duration"]) || !isset($request["end_duration"])){
 	        $request["start_duration"] = 0;
-	        $request["end_duration"] = 1;
+	        $request["end_duration"] = 99999;
 	    }else{
 	        if((int)$request["start_duration"] < 0) $request["start_duration"] = 0;
 	        if((int)$request["end_duration"] > 100000) $request["end_duration"] = 99999;
+	    }*/
+	    
+	    if(isset($request["start_duration"]) && isset($request["end_duration"])){
+	        if((int)$request["start_duration"] < 0) $request["start_duration"] = 0;
+	        if((int)$request["end_duration"] > 100000) $request["end_duration"] = 99999;
 	    }
+	    
+	    if(!isset($request["user_timezone"])){
+	        $request["user_timezone"] = "Asia/Phnom_Penh";
+	    }
+	    
 	    $response["response_code"] = "200";
 	    $data = $this->ShopModel->listSavedShop($request);
+	    
+	    $response_data = $data["response_data"];
+	    if(count($response_data) > 0){
+	        foreach($response_data as $item){    
+	            
+	            $created_date = new DateTime( $item->created_date);	        
+	            $created_date->setTimezone(new DateTimeZone($request["user_timezone"]));
+	            $item->created_date = $created_date->format('Y-m-d H:i:s'); ;
+	        }
+	    }
 	    $response["total_record"] = $data["total_record"];
 	    $response["total_page"] = $data["total_page"];
-	    $response["response_data"] = $data["response_data"];
+	    $response["response_data"] = $response_data;
 	    
 	    $this->response($response, 200);
 	}
