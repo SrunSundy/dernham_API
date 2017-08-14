@@ -282,14 +282,12 @@ class PostModel extends CI_Model{
 		$sql = "SELECT
 					sp.id,
 					sp.post_id,
-					p.post_caption,
 					pi.post_image_src,
-					p.shop_id,
-					s.shop_name_en,
-					s.shop_name_kh,
 					p.user_id,
-					u.user_fullname
-										
+					u.user_fullname,
+                    u.user_photo,
+                    sp.created_date
+                    										
 				FROM nham_saved_post sp
 				LEFT JOIN nham_user_post p ON sp.post_id = p.post_id
 				LEFT JOIN nham_user u ON p.user_id = u.user_id
