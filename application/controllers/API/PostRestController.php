@@ -313,6 +313,80 @@ class PostRestController extends REST_Controller{
 		
 	}
 	
+	function listexpandedsavedpost_get(){
+	    
+	    //row=20&
+	    //page=1&
+	    //user_id
+	    //post_id
+	    
+	    $request["row"] = $this->input->get('row');
+	    $request["page"] = $this->input->get('page');
+	    $request["user_id"] = $this->input->get('user_id');
+	    $request["post_id"] = $this->input->get('post_id');
+	    
+	    if(!isset( $request["user_id"])){
+	        
+	        $response["response_code"] = "400";
+	        $response["error"] = "user_id is required!";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    
+	    
+	    $responsequery = $this->PostModel->listExpandedSavedPost($request);
+	    
+	    $response["response_code"] = "200";
+	    $response["total_record"] = $responsequery["total_record"];
+	    $response["total_page"] = $responsequery["total_page"];
+	    
+	    $response_data = array();
+	    
+	    if( isset($request["post_id"]) && (int)$request["page"] == 1){
+	        $addition = $this->PostModel->getSavedPost($request);
+	        if($addition){
+	            array_push($response_data, $addition["response_data"]);
+	        }
+	       
+	    }
+	    
+	    if(count($responsequery["response_data"]) > 0){
+	        foreach($responsequery["response_data"] as $data){
+	            array_push($response_data , $data);
+	        }
+	    }
+	          
+	    if(count($response_data) > 0){
+	        foreach($response_data as $item){
+	            $request_com["post_id"] = $item->object_id;
+	            $this->load->model("CommentModel");
+	            $item->comment_count = $this->CommentModel->countCommentByPostid($request_com)->count;
+	            
+	            $request_pimg["post_id"] = $item->object_id;
+	            $request_pimg["row"] = 9999999999;
+	            $request_pimg["page"] = 1;
+	            $this->load->model("PostImageModel");
+	            $item->post_img = $this->PostImageModel->listUserPostImageByPostid($request_pimg)["response_data"];
+	            
+	            $request_dcom["post_id"] = $item->object_id;
+	            $request_dcom["row"] = 1;
+	            $request_dcom["page"] = 1;
+	            $request_dcom["order_type"]= 1;
+	            $item->comment_item = $this->CommentModel->listCommentByPostId($request_dcom)["response_data"];
+	            $item->like_count = $this->PostModel->countLike($request_com)->count;
+	            
+	            $request_islike["post_id"] = $item->object_id;
+	            $request_islike["user_id"] = $request["user_id"];
+	            $item->is_liked = $this->PostModel->isUserLiked($request_islike)->is_liked;
+	        }
+	    }
+	    
+	    $response["response_data"] = $response_data;
+	    $this->response($response, 200);
+	    
+	}
+	
 	function list_saved_posts_get(){
 		
 		//row=20&

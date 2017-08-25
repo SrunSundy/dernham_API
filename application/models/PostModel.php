@@ -115,7 +115,7 @@ class PostModel extends CI_Model{
 		$param["user_id_1"] = $request["user_id"];
 		$param["post_id_1"] = $request["post_id"];
 		$query = $this->db->query($sql , $param);
-		return ($this->db->affected_rows() != 1) ? false : true;
+		return $query;
 	}
 	
 	
@@ -125,7 +125,7 @@ class PostModel extends CI_Model{
 		$param["post_id"] = $request["post_id"];
 		
 		$query = $this->db->query($sql , $param);
-		return ($this->db->affected_rows() < 1) ? false : true;
+		return $query;
 	}
 	
 	
@@ -312,6 +312,105 @@ class PostModel extends CI_Model{
 		
 		$response["response_data"] = $query->result();
 		return $response;
+	}
+	
+	function listExpandedSavedPost( $request ){
+	    
+	    $row = (int)$request["row"];
+	    $page = (int)$request["page"];
+	    $user_id = $request["user_id"];
+	    
+	    
+	    if(!$row) $row = 10;
+	    if(!$page) $page = 1;
+	    
+	    $limit = $row;
+	    $offset = ($row*$page)-$row;
+	    
+	    $param = array();
+	    $sql = "SELECT 
+                	sp.object_id,
+                	p.post_caption,
+                    p.post_count_view,
+                    p.post_count_share,
+                    p.post_created_date,
+                	p.shop_id,
+                    sh.shop_name_en,
+                    sh.shop_name_kh,
+                    sh.shop_address,
+                    sh.shop_status,
+                    p.user_id,
+                    u.user_fullname,
+                    u.user_photo,
+                    u.user_status 
+                FROM nham_saved_post sp 
+                LEFT JOIN nham_user_post p ON p.post_id = sp.object_id
+                LEFT JOIN nham_shop sh ON p.shop_id = sh.shop_id
+                LEFT JOIN nham_user u ON p.user_id = u.user_id
+                WHERE sp.user_id = ? 
+                AND sp.saved_type='post' 
+                AND p.post_status =  1 ";
+	    
+	    array_push($param, $user_id);
+	    if(isset($request["post_id"])){
+	        $post_id = $request["post_id"];
+	        $sql .=" AND sp.object_id <> ? ";
+	        array_push($param, $post_id);
+	    }
+	    
+	    $sql .= " ORDER BY sp.created_date DESC ";
+	    $query_record = $this->db->query($sql, $param);
+	    $total_record = count($query_record->result());
+	    $total_page = $total_record / $row;
+	    if( ($total_record % $row) > 0){
+	        $total_page += 1;
+	    }
+	    
+	    $response["total_record"] = $total_record;
+	    $response["total_page"] = (int)$total_page;
+	    
+	    $sql .= "LIMIT ? OFFSET ? ";
+	    array_push($param, $limit , $offset);
+	    $query = $this->db->query($sql, $param);
+	    
+	    $response["response_data"] = $query->result();
+	    return $response;
+	}
+	
+	function getSavedPost($request){
+	    
+	    $user_id = $request["user_id"];
+	    $post_id = $request["post_id"];
+	    
+	    $param = array();
+	    $sql = "SELECT 
+                		sp.object_id,
+                		p.post_caption,
+                		p.post_count_view,
+                		p.post_count_share,
+                		p.post_created_date,
+                		p.shop_id,
+                		sh.shop_name_en,
+                		sh.shop_name_kh,
+                		sh.shop_address,
+                		sh.shop_status,
+                		p.user_id,
+                		u.user_fullname,
+                		u.user_photo,
+                		u.user_status 
+                FROM nham_saved_post sp 
+                LEFT JOIN nham_user_post p ON p.post_id = sp.object_id
+                LEFT JOIN nham_shop sh ON p.shop_id = sh.shop_id
+                LEFT JOIN nham_user u ON p.user_id = u.user_id
+                WHERE sp.user_id = ? AND sp.saved_type='post' AND p.post_status =  1 
+                AND sp.object_id= ? ";
+	    
+	    array_push($param, $user_id, $post_id );
+	    $query = $this->db->query($sql, $param);
+	    
+	    $response["response_data"] = $query->row();
+	    return $response;
+	    
 	}
 	
 	function getUserNotification($request){
