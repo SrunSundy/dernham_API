@@ -56,18 +56,18 @@ class UserRestController extends REST_Controller{
 		$is_exist = count($checkuser);
 		if($is_exist >= 1){
 			
-			$msg = "user already exists. ";
+			$msg = "user is already existed. ";
 			
 			$this->load->helper('userstatus');
 			switch((int)$checkuser->user_status){			
 				case userstatus::Disabled : {
 					$response["response_code"] = "000";
-					$response["response_msg"] = $msg."user is disabled!";
+					$response["response_msg"] = $msg."user is disabled! contact adminstrator for the issue. ";
 					$this->response($response, 200);
 					break;
 				}
 				case userstatus::Active :{
-					$response["response_code"] = "200";
+					$response["response_code"] = "000";
 					$response["response_msg"] = $msg. "user is active";
 					$this->response($response, 200);
 					break;
@@ -102,7 +102,7 @@ class UserRestController extends REST_Controller{
 					$response["response_msg"] = "Registration is successful!";
 					$this->response($response ,200);
 				}else{
-					$response["response_code"] = "001";
+					$response["response_code"] = "000";
 					$response["response_msg"] = "Registration fails!";
 					$this->response($response ,200);
 				}
@@ -307,15 +307,19 @@ class UserRestController extends REST_Controller{
 		//============end fix================  */
 			$this->load->helper('userstatus');
 			switch((int) $data->user_status){
-				
-				
 				case userstatus::Disabled : {
 					$response["response_code"] = "000";
 					$response["response_msg"] = "user is disabled!";
 					$this->response($response, 200);
 					break;
 				}
+				
 				case userstatus::Active :{
+					//=========record user log============	
+					$request["user_id"] = $data->user_id;	
+					$request["action_type"] = "login";	
+					$datalog = $this->UserModel->insertUserLog($request);
+					
 					$response["response_code"] = "200";
 					$response["response_data"] = $data;
 					$this->response($response, 200);
@@ -359,11 +363,14 @@ class UserRestController extends REST_Controller{
 		
 		$request["user_id"] = $request["fbid"];
 		
-				
-		
 		$data = $this->UserModel->checkIfFBUserExist($request);
 		
 		if(count($data)>=1){
+			//=========record user log============	
+					$request["user_id"] = $data->user_id;	
+					$request["action_type"] = "FBlogin";	
+					$datalog = $this->UserModel->insertUserLog($request);
+					
 			$response["response_code"] = "200";
 			$response["response_msg"] = "login is successful.";
 			$response["response_data"] = $data;
@@ -371,16 +378,24 @@ class UserRestController extends REST_Controller{
 
 		}else{
 			//====change cover profile and profile name from facebook;
-        		$path = $_SERVER['DOCUMENT_ROOT'].'/user_profile/';
+        		$path = $_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/real/user/medium/';
         		$f_profile_output = $request["fbid"].'.jpg';
         		$f_profile= 'http://graph.facebook.com/'.$request["fbid"].'/picture?type=large';
         		file_put_contents($path.$f_profile_output, file_get_contents($f_profile));
+        		
+        		$path = $_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/real/user/small/';
+        		file_put_contents($path.$f_profile_output, file_get_contents($f_profile));
+        		
+        		//===insert FB user infor
 			$data1 = $this->UserModel->registerFBUser($request);
 			
-			//insert device token
-			$token = $this->UserModel->insertDeviceToken($request); 
-			
 			if(count($data1)>=1){
+			
+				//=========record user log============	
+				$request["user_id"] = $data1->user_id;	
+				$request["action_type"] = "FBlogin";	
+				$datalog = $this->UserModel->insertUserLog($request);
+							
 				$response["response_code"] = "200";
 				$response["response_data"] = $data1;
 				$response["response_msg"] = "Registration is successful!";
@@ -560,10 +575,12 @@ class UserRestController extends REST_Controller{
 		$data = $this->UserModel->reqUserFollow($request);
 		if($data){
 			
+			//======insert into notification tb=========
 			$this->load->model("PostModel");
-			//insert into notification tb
-			$request["object_id"]=$request["profile_id"];
-			$request["action_id"]=3; //1 = like, 2 = comment, 3 = follow
+			$request["actioner_id"]=$request["user_id"];
+			$request["user_id"]=$request["profile_id"];
+			$request["object_id"]="";
+			$request["action_id"]=3; //1 = like, 2 = comment, 3 = follow, 4 = post
 			$notify = $this->PostModel->notifyUser($request);
 		
 			$response["response_code"] = "200";
@@ -640,6 +657,39 @@ class UserRestController extends REST_Controller{
 			$this->response($response ,200);
 	}
 	
+	function user_report_shop_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
+		!isset($request["reported_type"]) || IsNullOrEmptyString($request["reported_type"]) ||
+		!isset($request["object_id"]) || IsNullOrEmptyString($request["object_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$report = $this->UserModel->reportShop($request);
+		if($report){
+			$response["response_code"] = "200";
+			$response["response_msg"] = "reported successfully";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "report failed!";
+			$this->response($response ,200);
+		}
+	}
+	
 	function user_report_post_post(){
 		$request = json_decode($this->input->raw_input_stream,true);
 		
@@ -653,7 +703,7 @@ class UserRestController extends REST_Controller{
 		$request = $request["request_data"];
 		$this->load->helper('validate');
 		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
-		!isset($request["post_id"]) || IsNullOrEmptyString($request["post_id"])){
+		!isset($request["object_id"]) || IsNullOrEmptyString($request["object_id"])){
 			$response["response_code"] = "400";
 			$response["error"] = "bad request";
 			$this->response($response, 400);
@@ -663,11 +713,43 @@ class UserRestController extends REST_Controller{
 		$report = $this->UserModel->reportPost($request);
 		if($report){
 			$response["response_code"] = "200";
-			$response["response_msg"] = "report successfully";
+			$response["response_msg"] = "reported successfully";
 			$this->response($response ,200);
 		}else{
 			$response["response_code"] = "000";
 			$response["response_msg"] = "report failed!";
+			$this->response($response ,200);
+		}
+	}
+	
+	function user_unreport_post_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
+		!isset($request["object_id"]) || IsNullOrEmptyString($request["object_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		$report = $this->UserModel->unreportPost($request);
+		if($report){
+			$response["response_code"] = "200";
+			$response["response_msg"] = "unreported successfully";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "unreport failed!";
 			$this->response($response ,200);
 		}
 	}
@@ -681,16 +763,17 @@ class UserRestController extends REST_Controller{
 			$this->response($response, 400);
 			die();
 		}
-		
+					
 		$request = $request["request_data"];
 		$this->load->helper('validate');
 		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
-		!isset($request["post_id"]) || IsNullOrEmptyString($request["post_id"])){
+		!isset($request["saved_type"]) || IsNullOrEmptyString($request["saved_type"]) ||
+		!isset($request["object_id"]) || IsNullOrEmptyString($request["object_id"])){
 			$response["response_code"] = "400";
 			$response["error"] = "bad request";
 			$this->response($response, 400);
 			die();
-		}
+		}  
 		
 		$report = $this->UserModel->savePost($request);
 		if($report){
@@ -717,7 +800,8 @@ class UserRestController extends REST_Controller{
 		$request = $request["request_data"];
 		$this->load->helper('validate');
 		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
-		!isset($request["post_id"]) || IsNullOrEmptyString($request["post_id"])){
+		!isset($request["saved_type"]) || IsNullOrEmptyString($request["saved_type"]) ||
+		!isset($request["object_id"]) || IsNullOrEmptyString($request["object_id"])){
 			$response["response_code"] = "400";
 			$response["error"] = "bad request";
 			$this->response($response, 400);
@@ -727,11 +811,11 @@ class UserRestController extends REST_Controller{
 		$report = $this->UserModel->unsavedPost($request);
 		if($report){
 			$response["response_code"] = "200";
-			$response["response_msg"] = "saved successfully";
+			$response["response_msg"] = "unsaved successfully";
 			$this->response($response ,200);
 		}else{
 			$response["response_code"] = "000";
-			$response["response_msg"] = "save failed!";
+			$response["response_msg"] = "unsave failed!";
 			$this->response($response ,200);
 		}
 	}
@@ -781,14 +865,27 @@ class UserRestController extends REST_Controller{
 		$responsequery = $this->UserModel->listTopMembers($request);
 		
 		$response["response_code"] = "200";
-		$response["total_record"] = $responsequery["total_record"];
-		$response["total_page"] = $responsequery["total_page"];
-		
-		$response_data = $responsequery["response_data"];
-				
-		$response["response_data"] = $response_data;
-		$this->response($response, 200);
-		
+			$response["total_record"] = $responsequery["total_record"];
+			$response["total_page"] = $responsequery["total_page"];
+			
+			$response_data = $responsequery["response_data"];
+			$response["response_data"] = $response_data;
+			$this->response($response, 200);
+		/*
+		if($responsequery){
+			$response["response_code"] = "200";
+			$response["total_record"] = $responsequery["total_record"];
+			$response["total_page"] = $responsequery["total_page"];
+			
+			$response_data = $responsequery["response_data"];
+			$response["response_data"] = $response_data;
+			$this->response($response, 200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "update failed!";
+			$this->response($response ,200);
+		}
+		*/
 	}
 	
 	function update_user_photo_name_post(){
@@ -814,6 +911,7 @@ class UserRestController extends REST_Controller{
 		
 		$res = $this->UserModel->updateUserPhotoName($request);
 		if($res){
+			
 			$response["response_code"] = "200";
 			$response["response_msg"] = "updated successfully";
 			$this->response($response ,200);
@@ -863,10 +961,12 @@ class UserRestController extends REST_Controller{
 		//row=20&
 		//page=2&
 		//user_id
+		//user_timezone
 		
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');	
 		$request["user_id"] = $this->input->get('user_id');	
+		$request["user_timezone"] = $this->input->get('user_timezone');
 		
 		$responsequery = $this->UserModel->getUserNotification($request);
 		
@@ -875,13 +975,182 @@ class UserRestController extends REST_Controller{
 		$response["total_page"] = $responsequery["total_page"];
 		
 		$response_data = $responsequery["response_data"];
+		if(count($response_data) > 0){
+		    $this->load->helper('timecalculator');
+		    foreach($response_data as $item){
+		        $item->created_date = tz($item->created_date, $request["user_timezone"]);
+		    }
+		}
 				
 		$response["response_data"] = $response_data;
 		$this->response($response, 200);
 	}
+
+	
+	function get_followers_get(){
+		//row=20&
+		//page=2&
+		//user_id
+		
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');	
+		$request["user_id"] = $this->input->get('user_id');	
+		
+		$responsequery = $this->UserModel->getFollowers($request);
+		$response["response_data"] = $responsequery["response_data"];
+		
+		if($responsequery){
+		
+			
+			//$response["total_record"] = $responsequery["total_record"];
+			//$response["total_page"] = $responsequery["total_page"];
+				$response["response_code"] = "200";
+				$response["response_msg"] = "selected successfully";
+				$this->response($response ,200);
+		}else{
+				$response["response_code"] = "000";
+				$response["response_msg"] = "select failed";
+				$this->response($response ,200);
+		}
+	}
+	
+	function get_following_get(){
+		//row=20&
+		//page=2&
+		//user_id
+		
+		$request["row"] = $this->input->get('row');
+		$request["page"] = $this->input->get('page');	
+		$request["user_id"] = $this->input->get('user_id');	
+		
+		$responsequery = $this->UserModel->getFollowing($request);
+		$response["response_data"] = $responsequery["response_data"];
+		
+		if($responsequery){
+		
+			
+			//$response["total_record"] = $responsequery["total_record"];
+			//$response["total_page"] = $responsequery["total_page"];
+				$response["response_code"] = "200";
+				$response["response_msg"] = "selected successfully";
+				$this->response($response ,200);
+		}else{
+				$response["response_code"] = "000";
+				$response["response_msg"] = "select failed";
+				$this->response($response ,200);
+		}
+	}
+	
+	function user_forget_password_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+		
+		if(!isset($request["email"]) || IsNullOrEmptyString($request["email"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$res = $this->UserModel->userForgetPassword($request);
+		if(count($res)>=1){
+			$this->load->model("EmailModel");
+			$req["user_email"] = $res->user_email;
+			$req["user_password"] = $res->user_password;
+			$sendemail = $this->EmailModel->sendEmailForgetPassword($req);	
+		
+			$response["response_code"] = "200";
+			$response["response_msg"] = "sent successfully";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "send failed!";
+			$this->response($response ,200);
+		}
+	}
 	
 	
 	
+	function user_feedback_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+		
+		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"])||
+			!isset($request["description"]) || IsNullOrEmptyString($request["description"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request["image_src"] = (!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"])) ? "" : $request["image_src"];
+		
+		$res = $this->UserModel->userFeedback($request);
+		if($res){
+		
+			if($request["image_src"]!=""){
+				copy($_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/temp/user_feedback/medium/'.$request["image_src"], $_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/real/user_feedback/medium/'.$request["image_src"]);
+			
+			}
+		
+			$response["response_code"] = "200";
+			$response["response_msg"] = "feedbacked successfully";
+			$this->response($response ,200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "feedback failed!";
+			$this->response($response ,200);
+		}
+	}
+	
+	
+	function update_read_notification_post(){
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		$request = $request["request_data"];
+		
+		$this->load->helper('validate');
+		
+		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"])||
+		!isset($request["already_read"]) || IsNullOrEmptyString($request["already_read"]) ||
+		!isset($request["last_notify_id"]) || IsNullOrEmptyString($request["last_notify_id"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}		
+		
+		$data = $this->UserModel->updateReadNotification($request);
+		if($data){
+				$response["response_code"] = "200";
+				$response["response_msg"] = "updated successfully";
+				$this->response($response ,200);
+		}else{
+				$response["response_code"] = "000";
+				$response["response_msg"] = "update failed";
+				$this->response($response ,200);
+		}
+	}
 	
 	
 	

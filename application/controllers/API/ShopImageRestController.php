@@ -74,18 +74,34 @@ class ShopImageRestController extends REST_Controller{
 		$this->response($response, 200);
 	}
 	
-	public function getshopimage_get( $shop_image_id = null ){
+	public function getshopimage_get(){
 		
-		$response_data = $this->ShopImageModel->getShopDetailImg($shop_image_id);
+	    //sh_img_id
+	    //user_timezone
+	    
+	    $request["user_timezone"] =  $this->input->get('user_timezone');
+	    $request["sh_img_id"] =  $this->input->get('sh_img_id');
+	    
+	    if(!isset($request["sh_img_id"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "invalid sh_img_id";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    $response_data = $this->ShopImageModel->getShopDetailImg($request["sh_img_id"]);
 		
 		if($response_data){
-			$this->load->helper('imagetype');
+		    
+		    $this->load->helper('timecalculator');
+		    $response_data->sh_img_created_date = tz($response_data->sh_img_created_date, $request["user_timezone"]);
+			/*$this->load->helper('imagetype');
 			
 			$request["shop_id"] = $response_data->shop_id;
 			$request["limit"] = 6 ; 
 			$request["img_type"] = imagetype::Detail;
 			$request["has_defined"] = $shop_image_id;
-			$response_data->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($request);		
+			$response_data->shop_related_img = $this->ShopImageModel->listShopDetailImgByShopid($request);	*/	
 		}
 
 		$response["response_code"] = "200";

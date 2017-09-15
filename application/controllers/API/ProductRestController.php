@@ -186,6 +186,78 @@ class ProductRestController extends REST_Controller{
 	    $this->response($response, 200);
 	}
 	
+	public function get_product_detail_post(){
+        /*{
+         * user_timezone : Asia/Phnom_Penh
+         * }
+         * */
+		$request = json_decode($this->input->raw_input_stream,true);
+		
+		if(!isset($request["request_data"])){
+			$response["response_code"] = "400";
+			$response["error"] = "bad request";
+			$this->response($response, 400);
+			die();
+		}
+		
+		
+		$request = $request["request_data"];
+		$this->load->helper('validate');
+	   	if(!isset($request["product_id"]) || !validateNumeric($request["product_id"])){
+		        $response["response_code"] = "400";
+		        $response["error"] = "invalid product_id";
+		        $this->response($response, 400);
+		        die();
+	    }
+	    if(!isset($request["user_timezone"])){
+	        $request["user_timezone"] = "Asia/Phnom_Penh";
+	    }
+	        
+		
+		$product_detail = $this->ProductModel->getProductDetail($request);		  
+		if(count($product_detail) > 0){
+			
+		    $now = new DateTime($product_detail[0]->shop_time_zone);
+		    $now = strtotime($now->format('H:i:s'));
+		    
+		    $is_open = 0;
+		    
+		    if(strtotime($product_detail[0]->shop_opening_time) < $now && strtotime($product_detail[0]->shop_close_time) > $now){
+		        $is_open = 1;
+		    }
+		    $product_detail[0]->is_shop_open = $is_open;
+		    
+		    $tz_date_s = new DateTime($product_detail[0]->shop_opening_time, new DateTimeZone($product_detail[0]->shop_time_zone));
+		    $tz_date_s->setTimezone(new DateTimeZone($request["user_timezone"]));
+		    $tz_date_e = new DateTime($product_detail[0]->shop_close_time, new DateTimeZone($product_detail[0]->shop_time_zone));
+		    $tz_date_e->setTimezone(new DateTimeZone($request["user_timezone"]));
+		    
+		    $product_detail[0]->shop_opening_time = $tz_date_s->format('H:i:s');
+		    $product_detail[0]->shop_close_time = $tz_date_e->format('H:i:s');
+		    
+		    $product_detail[0]->display_time =  date('h:i A', strtotime($product_detail[0]->shop_opening_time))." - ".date('h:i A', strtotime($product_detail[0]->shop_close_time));
+		    
+			//===========request related product===============
+			$reqest_related_pro["shop_id"] = $product_detail[0]->shop_id;
+			$reqest_related_pro["row"] = 5;
+			$reqest_related_pro["page"] = 1;
+			$reqest_related_pro["is_popular"] = 1;
+			$related_products = $this->ProductModel->listProductByShopid($reqest_related_pro);
+								
+			$response["product_detail"] = $product_detail;
+			$response["related_products"] = $related_products;
+			$response["response_code"] = "200";
+			$response["response_msg"] = "list successfully";
+			$this->response($response, 200);
+		}else{
+			$response["response_code"] = "000";
+			$response["response_msg"] = "not found";
+			$this->response($response, 200);
+		}
+	}
+	
+	
+	
 }
 
 ?>

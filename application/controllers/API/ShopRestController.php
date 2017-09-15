@@ -23,12 +23,6 @@ class ShopRestController extends REST_Controller{
 		$this->load->view('index');
 	}	
 	
-	public function sundy_get(){
-		
-		$this->load->helper("imagepath");
-		echo imagepath::getIconPath();
-	}
-	
 	public function listshop_post(){
 		/* {
 			"request_data" : {
@@ -70,6 +64,8 @@ class ShopRestController extends REST_Controller{
 	
 		
 		if(count($responsedata) > 0){
+		    
+		    $this->load->helper('distancecalculator');
 			foreach($responsedata as $item){
 			
 				if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
@@ -100,8 +96,7 @@ class ShopRestController extends REST_Controller{
 				$item->is_shop_open = $is_open;
 				$item->time_to_close = $time_to_close;
 				$item->time_to_open = $time_to_open;
-				
-				$this->load->helper('distancecalculator');
+								
 				$item->distance = distanceFormat($item->distance);
 			
 				$item->shop_img = [];
@@ -161,7 +156,7 @@ class ShopRestController extends REST_Controller{
 			"request_data" : {
 				"current_lat" : 11.565723328439192,
 				"current_lng" :104.88913536071777,
-				"nearby_value" : 3,
+				"serve_category_id" : 3,
 				"row" : 10,
 				"page" : 1	
 			}
@@ -236,6 +231,11 @@ class ShopRestController extends REST_Controller{
 		$request["current_lng"] = $this->input->get('current_lng');
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');
+		$request["user_timezone"] = $this->input->get('user_timezone');
+		
+		if(!isset($request["user_timezone"])){
+		    $request["user_timezone"] = "Asia/Phnom_Penh";
+		}
 		
 		$responsequery = $this->ShopModel->listPopularShop($request);
 		
@@ -244,8 +244,31 @@ class ShopRestController extends REST_Controller{
 		  
 		    $this->load->helper('distancecalculator');		    
 		    foreach($responsedata as $item){		       
+		        
+		        if($item->shop_time_zone == null || trim($item->shop_time_zone)== "" ){
+		            $item->shop_time_zone = "Asia/Phnom_Penh";
+		        }
+		        $now = new DateTime($item->shop_time_zone);
+		        $now = strtotime($now->format('H:i:s'));
+		        
+		        $is_open = 0;
+		        
+		        if(strtotime($item->shop_opening_time) < $now && strtotime($item->shop_close_time) > $now){
+		            $is_open = 1;
+		        }
+		        $item->is_shop_open = $is_open;
+		        
 		        $item->distance = distanceFormat($item->distance);
-		        $item->display_time =  date('h:i A', strtotime($item->shop_opening_time))." - ".date('h:i A', strtotime($item->shop_close_time)) ;
+		        
+		        $tz_date_s = new DateTime($item->shop_opening_time, new DateTimeZone($item->shop_time_zone));
+		        $tz_date_s->setTimezone(new DateTimeZone($request["user_timezone"]));
+		        $tz_date_e = new DateTime($item->shop_close_time, new DateTimeZone($item->shop_time_zone));
+		        $tz_date_e->setTimezone(new DateTimeZone($request["user_timezone"]));
+		        
+		        $item->shop_opening_time = $tz_date_s->format('H:i:s');
+		        $item->shop_close_time = $tz_date_e->format('H:i:s');
+		        
+		        $item->display_time =  date('h:i A', strtotime($item->shop_opening_time))." - ".date('h:i A', strtotime($item->shop_close_time));
 		    }
 		}		
 		$response["response_code"] = "200";		
@@ -336,6 +359,7 @@ class ShopRestController extends REST_Controller{
 			"request_data" : {
 			"shop_id" : 1,
 			"user_id" : 0,
+			"user_timezone": "Asia/Phnom_Penh",
 			"current_lat" : 11.565723328439192,
 			"current_lng" : 104.88913536071777
 			}
@@ -363,6 +387,7 @@ class ShopRestController extends REST_Controller{
 				
 		if(!isset($request["current_lat"])) $request["current_lat"] = 0;
 		if(!isset($request["current_lng"])) $request["current_lng"] = 0;
+		if(!isset($request["user_timezone"])) $request["user_timezone"] = "Asia/Phnom_Penh";
 		
 		$item = $this->ShopModel->getShop($request);
 		
@@ -401,6 +426,16 @@ class ShopRestController extends REST_Controller{
 			$item->time_to_close = $time_to_close;
 			$item->time_to_open = $time_to_open;
 			
+			$tz_date_s = new DateTime($item->shop_opening_time, new DateTimeZone($item->shop_time_zone));
+			$tz_date_s->setTimezone(new DateTimeZone($request["user_timezone"]));
+			$tz_date_e = new DateTime($item->shop_close_time, new DateTimeZone($item->shop_time_zone));
+			$tz_date_e->setTimezone(new DateTimeZone($request["user_timezone"]));
+			
+			$item->shop_opening_time = $tz_date_s->format('H:i:s');
+			$item->shop_close_time = $tz_date_e->format('H:i:s');
+			$item->display_time =  date('h:i A', strtotime($item->shop_opening_time))." - ".date('h:i A', strtotime($item->shop_close_time));
+			
+			
 			/*$request_is_bookmarked["shop_id"] = $shop_id;
 			$request_is_bookmarked["user_id"] = (isset($request["user_id"])) ? $request["user_id"] : 0;
 			$item->is_saved = $this->ShopModel->isUserBookmarked($request_is_bookmarked)->is_saved;
@@ -426,7 +461,7 @@ class ShopRestController extends REST_Controller{
 			$this->load->helper('imagetype');
 			
 			$request_img["shop_id"] = $shop_id;
-			$request_img["row"] = 6 ;
+			$request_img["row"] = 3 ;
 			$request_img["page"] = 1 ;
 			$request_img["img_type"] = imagetype::Detail;			 
 			$item->shop_related_img["total_record"] = $this->ShopImageModel->countListShopDetailImgByShopid($request_img)->total_record;
@@ -804,21 +839,16 @@ class ShopRestController extends REST_Controller{
 	        if((int)$request["start_duration"] < 0) $request["start_duration"] = 0;
 	        if((int)$request["end_duration"] > 100000) $request["end_duration"] = 99999;
 	    }
-	    
-	    if(!isset($request["user_timezone"])){
-	        $request["user_timezone"] = "Asia/Phnom_Penh";
-	    }
-	    
+	   
 	    $response["response_code"] = "200";
 	    $data = $this->ShopModel->listSavedShop($request);
 	    
 	    $response_data = $data["response_data"];
 	    if(count($response_data) > 0){
-	        foreach($response_data as $item){    
-	            
-	            $created_date = new DateTime( $item->created_date);	        
-	            $created_date->setTimezone(new DateTimeZone($request["user_timezone"]));
-	            $item->created_date = $created_date->format('Y-m-d H:i:s'); ;
+	        
+	        $this->load->helper('timecalculator');
+	        foreach($response_data as $item){    	            
+	            $item->created_date = tz($item->created_date, $request["user_timezone"]);
 	        }
 	    }
 	    $response["total_record"] = $data["total_record"];

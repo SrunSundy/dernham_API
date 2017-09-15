@@ -28,10 +28,12 @@ class CommentRestController extends REST_Controller{
 		//row=20&
 		//page=2
 		//post_id= 1
+		//user_timezone = Asia/Phnom_Penh
 		
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');
 		$request["post_id"] = $this->input->get('post_id');
+		$request["user_timezone"] = $this->input->get('user_timezone');
 		
 		if(!isset($request["post_id"])){
 			$response["response_code"] = "400";
@@ -42,11 +44,24 @@ class CommentRestController extends REST_Controller{
 		
 		$responsequery = $this->CommentModel->listCommentByPostId($request);
 		
+		$responsedata = $responsequery["response_data"];
+		if($responsedata){
+		    if(count($responsedata) > 0){
+		        $this->load->helper('timecalculator');
+		        foreach($responsedata as $item){
+		            $item->created_date = tz($item->created_date, $request["user_timezone"]);
+		        }
+		    }
+		    
+		   
+		}
+		
 		$response["response_code"] = "200";
 		$response["total_record"] = $responsequery["total_record"];
 		$response["total_page"] = $responsequery["total_page"];
-		$response["response_data"] = $responsequery["response_data"];
+		$response["response_data"] = $responsedata;
 		$this->response($response, 200);
+	
 		
 	}
 }
