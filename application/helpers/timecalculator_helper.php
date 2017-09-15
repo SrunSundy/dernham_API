@@ -55,6 +55,20 @@ if ( ! function_exists('covertToMilisecond'))
 	}
 }
 
+if ( ! function_exists('tz'))
+{
+    function tz($time , $zonename ){
+        
+        if(!$zonename || !isset($zonename)) $zonename = "Asia/Phnom_Penh";
+        
+        $created_date = new DateTime($time);
+        $created_date->setTimezone(new DateTimeZone($zonename));
+        $created_date = $created_date->format('Y-m-d H:i:s'); ;
+        return $created_date;
+        
+    }
+}
+
 	
 	
 	
