@@ -41,7 +41,7 @@ class ProductModel extends CI_Model{
 		
 		$this->load->helper('validate');
 		if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
-			$sql .="\n LEFT JOIN nham_serve_cate_map_shop cate  ON cate.shop_id = sh.shop_id ";
+			$sql .="\n LEFT JOIN nham_serve_cate_map_shop cate  ON cate.shop_id = s.shop_id ";
 			$sql .="\n WHERE pro.pro_status = 1 AND s.shop_status = 1 ";
 			$sql .= "\n AND cate.serve_category_id = ? ";
 			array_push($param, (int)$request["serve_category_id"]);
@@ -363,6 +363,32 @@ class ProductModel extends CI_Model{
 		$query = $this->db->query($sql, $shop_id);
 		
 		$response = $query->row();
+		return $response;
+	}
+	
+	function getProductDetail( $request ){
+		$sql = "SELECT p.pro_name_en, 
+                    p.pro_name_kh, 
+                    p.pro_price, 
+                    p.pro_promote_price, 
+                    p.pro_image, 
+                    s.shop_id ,
+                    s.shop_name_en, 
+                    s.shop_name_kh, 
+                    s.shop_logo,
+                    s.shop_working_day, 
+		            s.shop_opening_time,
+                    s.shop_close_time, 
+                    s.shop_lat_point, 
+                    s.shop_time_zone,
+                    s.shop_lng_point from nham_product p 
+		LEFT JOIN nham_shop s ON p.shop_id = s.shop_id 
+		where p.pro_id = ? and p.pro_status = 1 and s.shop_status = 1 limit 1";
+				
+		$param["product_id"] = $request["product_id"];
+				
+		$query = $this->db->query($sql, $param);
+		$response = $query->result();
 		return $response;
 	}
 	

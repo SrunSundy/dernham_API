@@ -31,27 +31,55 @@ class EmailModel extends CI_Model{
 		//$this->load->view('email_form');
 	} */
 	
-	function sendEmail( $request ){
-		$to = $request["email"];
-		$subject = "DerNham";		
+	function sendEmailForgetPassword( $request ){
+		$to = $request["user_email"];
+		$subject = "DerNham";	
+		$head = "Dernham sent you your password.";
+		$body = "Your password: <strong>".$request["user_password"]."</strong>.";
+		
 		$message = "
-				<html>
-					<head>
-						<title>Dernham sends you the verification code to access to your account</title>
-					</head>
-					<body>
-						<p>Your verification code: <strong>".$request["verification_code"]."</strong></p>						
-					</body>
-				</html>
-				";
+			<html>
+				<head>
+					<title>".$head."</title>
+				</head>
+				<body>
+					<p>".$body."</p>						
+				</body>
+			</html>";
 		
 		// Always set content-type when sending HTML email
 		$headers = "MIME-Version: 1.0" . "\r\n";
 		$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
 		
 		// More headers
-		$headers .= 'From: DerNham <webmaster@example.com>' . "\r\n";
-		$headers .= 'Cc: myboss@example.com' . "\r\n";
+		$headers .= 'From: DerNham <noreply@dernham.com>' . "\r\n";
+		//$headers .= 'Cc: myboss@example.com' . "\r\n";
+		
+		return mail($to,$subject,$message,$headers);
+	}
+	
+	function sendEmail( $request ){
+		$to = $request["email"];
+		$subject = "DerNham";	
+		$head = "Dernham sent you the verification code to activate to your account.";	
+		$body = "Your verification code: <strong>".$request["verification_code"]."</strong>.";
+		$message = "
+			<html>
+				<head>
+					<title>".$head."</title>
+				</head>
+				<body>
+					<p>".$body."</p>						
+				</body>
+			</html>	";
+		
+		// Always set content-type when sending HTML email
+		$headers = "MIME-Version: 1.0" . "\r\n";
+		$headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
+		
+		// More headers
+		$headers .= 'From: DerNham <noreply@dernham.com>' . "\r\n";
+		//$headers .= 'Cc: myboss@example.com' . "\r\n";
 		
 		return mail($to,$subject,$message,$headers);
 	}

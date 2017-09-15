@@ -149,17 +149,30 @@ class ShopModel extends CI_Model{
 					sh.shop_lng_point,
 					SQRT(POW(69.1 * (sh.shop_lat_point - ? ), 2) +
 						POW(69.1 * (? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
-				FROM nham_shop sh
-				WHERE sh.shop_status = 1 ";
+				FROM nham_shop sh ";
+		
+		$this->load->helper('validate');
+		if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
+		    $sql .="\n LEFT JOIN nham_serve_cate_map_shop cate  ON cate.shop_id = sh.shop_id ";
+		}
+		
+		$sql .="\n WHERE sh.shop_status = 1 ";		
+		
 		$param = array();
 		array_push($param, $current_lat, $current_lng);
+		
+		if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
+		    $sql .= "\n AND cate.serve_category_id = ? ";
+		    array_push($param, (int)$request["serve_category_id"]);
+		}
 		
 		if(isset($request["sch_str"])){
 			$sql .= " AND REPLACE(CONCAT_WS(sh.shop_name_en,sh.shop_name_kh,sh.shop_serve_type,sh.shop_address),' ','') LIKE REPLACE(?,' ','') ";
 			array_push($param, "%".$request["sch_str"]."%");
 		}
-		$sql .= " HAVING distance < ? ORDER BY distance ";
-		array_push($param, $nearby_value);
+	//	$sql .= " HAVING distance < ? ORDER BY distance ";
+	//	array_push($param, $nearby_value);
+	    $sql .= " ORDER BY distance ";
 		
 		$query_record = $this->db->query($sql , $param);
 		$total_record = count($query_record->result());
@@ -453,8 +466,9 @@ class ShopModel extends CI_Model{
 					shop_status,
 					shop_time_zone,
 					shop_lat_point,
-					shop_lng_point
-				)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+					shop_lng_point,
+                    shop_created_date
+				)VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 		$param["shop_name_en"] = $request["shop_name_en"];
 		$param["shop_name_kh"] = $request["shop_name_kh"];
 		$param["shop_logo"] = $request["shop_logo"];
@@ -469,6 +483,10 @@ class ShopModel extends CI_Model{
 		$param["shop_time_zone"] = (!isset($request["shop_time_zone"])) ? "Asia/Phnom_Penh" : $request["shop_time_zone"];
 		$param["shop_lat_point"] = $request["shop_lat_point"];
 		$param["shop_lng_point"] = $request["shop_lng_point"];
+		
+		$current_time = new DateTime();
+		$current_time = $current_time->format('Y-m-d H:i:s');
+		$param["shop_created_date"] = $current_time;
 		$query = $this->db->query($sql , $param);		
 		return ($this->db->affected_rows() != 1) ? false : true;
 	}
@@ -606,7 +624,17 @@ class ShopModel extends CI_Model{
 	    return $response;
 	}
 	
-	
+	function userRequestCreateShop($request){
+	    
+	    $sql = "INSERT INTO nham_shop_temp(shop_name_kh, shop_name_en, shop_phone, user_id) values(?, ?, ? ,?)";
+	    $param["shop_name_kh"] = $request["shop_name_kh"];
+	    $param["shop_name_en"] = $request["shop_name_en"];
+	    $param["shop_phone"] = $request["shop_phone"];
+	    $param["user_id"] = $request["user_id"];
+	    
+	    $query = $this->db->query($sql , $param);
+	    return $query;
+	}
 
 }
 

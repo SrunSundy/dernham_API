@@ -9,18 +9,20 @@ class UserModel extends CI_Model{
 	
 	function registerUser($request){
 	
-		$sql = "INSERT INTO nham_user(user_fullname, user_email, user_password, user_verification_code, fbid, type) VALUES(?, ?, ?, ?, ?, ?)";
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    
+		$sql = "INSERT INTO nham_user(user_fullname, user_email, user_password, user_verification_code, fbid, type, created_date) VALUES( ? , ?, ?, ?, ?, ?, ?)";
 		$param["fullname"] = $request["fullname"];
 		$param["email"] = $request["email"];
 		$param["password"] = $request["password"];
 		$param["verification_code"] = $request["verification_code"];
-		$param["fbid"] ="";
-		$param["type"] =0;
+		$param["fbid"] = "";
+		$param["type"] = 0;
+		$param["created_date"] = $current_time;
 		
 		$query = $this->db->query($sql , $param);
-		
 		return ($this->db->affected_rows() != 1) ? false : true;
-		
 	}
 	
 	function updateUserVerificationCode($request){
@@ -135,7 +137,11 @@ class UserModel extends CI_Model{
 	}
 	
 	function registerFBUser($request){
-		$sql = "INSERT INTO nham_user(user_fullname, user_email, user_gender, user_password, user_verification_code, type, fbid, user_photo) VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    
+		$sql = "INSERT INTO nham_user(user_fullname, user_email, user_gender, user_password, user_verification_code, type, fbid, user_photo, created_date) VALUES(? , ?, ?, ?, ?, ?, ?, ?, ?)";
 		$param["fullname"] = $request["fullname"];
 		$param["email"] = ($request["email"] != "") ? $request["email"] : "N/A";
 		$param["gender"] = ($request["gender"] != "") ? $request["gender"] : "N/A";
@@ -144,6 +150,7 @@ class UserModel extends CI_Model{
 		$param["type"] = 1; //0 normal login & 1 login as fb
 		$param["fbid"] = $request["fbid"];
 		$param["user_photo"] = $request["fbid"].'.jpg';
+		$param["created_date"] = $current_time;
 		
 		$query = $this->db->query($sql , $param);
 		if($this->db->affected_rows() != 1)
@@ -220,8 +227,11 @@ class UserModel extends CI_Model{
 	}
 	
 	function reqUserFollow($request){
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
 	
-		$sql = "INSERT INTO nham_user_follow(follower_id, following_id) SELECT ?, ? FROM dual
+		$sql = "INSERT INTO nham_user_follow(follower_id, following_id, created_date ) SELECT ?, ?, ? FROM dual
 				WHERE (
 					SELECT count(*) from nham_user_follow
 					WHERE follower_id = ? AND following_id = ?
@@ -230,6 +240,7 @@ class UserModel extends CI_Model{
 		$param["profile_id"] = $request["profile_id"];
 		$param["user_id_1"] = $request["user_id"];
 		$param["profile_id_1"] = $request["profile_id"];
+		$param["created_date"] = $current_time;
 		
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;	
@@ -255,25 +266,75 @@ class UserModel extends CI_Model{
 		return ($query->row()->count);
 	}
 	
+	function getFollowers($request){
+		$sql = "SELECT user_id, user_fullname, user_photo, user_quote from nham_user 
+		where user_id in (SELECT distinct follower_id FROM nham_user_follow WHERE following_id = ?)";
+		
+		$param["user_id"] = $request["user_id"];
+		$query = $this->db->query($sql , $param);
+		$response["response_data"] = $query->result();
+		return $response;
+	}
+	
+	function getFollowing($request){
+		$sql = "SELECT user_id, user_fullname, user_photo, user_quote from nham_user 
+		where user_id in (SELECT distinct following_id FROM nham_user_follow WHERE follower_id = ?)";
+		
+		$param["user_id"] = $request["user_id"];
+		$query = $this->db->query($sql , $param);
+		$response["response_data"] = $query->result();
+		return $response;
+	}
+	
 	function getNumberPost($request){
 		$sql = "SELECT count(*) as count
 				FROM nham_user_post u
-				WHERE u.user_id = ?";
+				WHERE u.user_id = ? and u.post_status = 1";
 		
 		$param["profile_id"] = $request["profile_id"];
 		$query = $this->db->query($sql , $param);
 		return ($query->row()->count);
 	}
 	
-	function reportPost($request){
+	function reportShop($request){
 	
-		$sql = "INSERT INTO nham_report_post(post_id, user_id, report_description) VALUES(?, ?, ?)";
-		$param["post_id"] = $request["post_id"];
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    
+		$sql = "INSERT INTO nham_user_report(user_id, object_id, reported_type, created_date) VALUES(?, ?, ?, ?)";
+		
 		$param["user_id"] = $request["user_id"];
-		$param["report_description"] = "Bad content";
+		$param["object_id"] = $request["object_id"];
+		$param["reported_type"] = $request["reported_type"];
+		$param["created_date"] = $current_time;
 		
 		$query = $this->db->query($sql , $param);
 		
+		return ($this->db->affected_rows() != 1) ? false : true;
+		
+	}
+	
+	function reportPost($request){	
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    
+		$sql = "INSERT INTO nham_report_post(post_id, user_id, report_description, created_date) VALUES(?, ?, ?, ?)";
+		$param["post_id"] = $request["object_id"];
+		$param["user_id"] = $request["user_id"];
+		$param["report_description"] = "Inappropriate content";
+		$param["created_date"] = $current_time;
+		
+		$query = $this->db->query($sql , $param);
+		return ($this->db->affected_rows() != 1) ? false : true;
+	}
+	
+	function unreportPost($request){
+		$sql = "DELETE from nham_report_post where user_id = ? and post_id = ?";
+		$param["user_id"] = $request["user_id"];
+		$param["post_id"] = $request["object_id"];
+		
+		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;
 		
 	}
@@ -293,8 +354,9 @@ class UserModel extends CI_Model{
 		$param["user_id"] = $request["user_id"];
 		$param["saved_type"] = "post";
 		
-		$now = new DateTime();
-		$param["created_date"] = strtotime($now->format('yyyy-mm-dd H:i:s'));
+		$current_time = new DateTime();
+		$current_time = $current_time->format('Y-m-d H:i:s');
+		$param["created_date"] = $current_time;
 		$param["object_id_1"] = $request["object_id"];
 		$param["user_id_1"] = $request["user_id"];
 		
@@ -338,11 +400,23 @@ class UserModel extends CI_Model{
 		$offset = ($row*$page)-$row;
 		
 		$param = array();
-		$sql = "SELECT u.user_id, u.user_fullname, u.user_photo
-			FROM nham_user u
-			LEFT JOIN nham_user_follow uf ON u.user_id = uf.following_id
-			GROUP BY u.user_id
-			ORDER BY count( uf.follower_id ) DESC ";
+		$sql = "SELECT 
+                	a.*,
+                	count(up.user_id) AS post_cnt
+                FROM 
+                	(SELECT u.user_id,
+                	 u.user_fullname,
+                	 u.user_photo,
+                	 u.user_quote,
+                	 count(uf.follower_id) AS follower_cnt
+                	FROM nham_user u
+                	LEFT JOIN nham_user_follow uf ON u.user_id = uf.following_id
+                    WHERE uf.status = 1
+                	GROUP BY u.user_id) a
+                LEFT JOIN nham_user_post up ON a.user_id = up.user_id
+                WHERE up.post_status = 1
+                GROUP BY up.user_id 
+                ORDER BY post_cnt DESC,a.follower_cnt DESC ";
 		
 		
 		$query_record = $this->db->query($sql);
@@ -365,7 +439,9 @@ class UserModel extends CI_Model{
 	
 	function updateUserPhotoName( $request ){
 		
-		if(copy('./uploadimages/user/medium/'.$request["temp_photo"], $_SERVER['DOCUMENT_ROOT'].'/user_profile/'.$request["temp_photo"])){
+		if(copy($_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/temp/user/medium/'.$request["temp_photo"], $_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/real/user/medium/'.$request["temp_photo"]) &&
+ copy($_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/temp/user/small/'.$request["temp_photo"], $_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/real/user/small/'.$request["temp_photo"]) &&
+copy($_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/temp/user/big/'.$request["temp_photo"], $_SERVER['DOCUMENT_ROOT'].'/dernham_API/uploadimages/real/user/big/'.$request["temp_photo"])){
 			$sql = "Update nham_user set user_photo = ? where user_id = ?";
 			$param["user_photo"] = $request["temp_photo"];
 			$param["user_id"] = $request["user_id"];
@@ -378,16 +454,14 @@ class UserModel extends CI_Model{
 	
 	function updateUserPassword($request){
 	
-		$user_id = $request["user_id"];
-		$old_pwd = $request["old_pwd"];
-		$new_pwd = $request["new_pwd"];
-		$sql = " UPDATE nham_user SET user_password = ? WHERE user_id = ? ";
+		$sql = " UPDATE nham_user SET user_password = ? WHERE user_id = ? and user_password = ? ";
 		
-		$param["user_id"] = $request["user_id"];
+		
 		$param["new_pwd"] = $request["new_pwd"];
+		$param["user_id"] = $request["user_id"];
+		$param["old_pwd"] = $request["old_pwd"];
 		$query = $this->db->query($sql , $param);
-		
-		return ($query);
+		return ($this->db->affected_rows() != 1) ? false : true;
 	}
 	
 	function insertDeviceToken($request){
@@ -418,14 +492,14 @@ class UserModel extends CI_Model{
 		$param = array();
 		
 		
-		$sql = "select n.actioner_id, n.object_id, n.action_id, n.description, n.created_date, u.user_fullname, u.user_photo,
-			pi.post_image_src	
+		$sql = "select n.id, n.actioner_id, n.user_id, n.object_id, n.action_id, n.description, n.created_date, 
+			u.user_fullname, u.user_photo, pi.post_image_src	
 			from nham_notification n 
 			left join nham_user u on u.user_id = n.actioner_id
 			left join nham_user_post_image pi on pi.post_id = n.object_id
-			where (n.action_id = 3 and 
-			n.object_id = ".$request["user_id"].") or 
-			object_id in (select p.post_id from nham_user_post p where p.user_id = ".$request["user_id"].")
+			where (n.user_id = ". $request["user_id"] .") or
+			(n.object_id in (select p.post_id from nham_user_post p where p.user_id = ". $request["user_id"] ."))
+            AND actioner_id <> ".$request["user_id"]."
 			order by n.created_date DESC";
 		
 		
@@ -445,6 +519,72 @@ class UserModel extends CI_Model{
 		
 		$response["response_data"] = $query->result();
 		return $response;
+	}
+	
+	function userForgetPassword($request){
+	
+		$sql = "SELECT user_email, user_password from nham_user where user_email = ? and user_status = 1 limit 1";
+		$param["email"] = $request["email"];
+		$query = $this->db->query($sql , $param);		
+		return $query->row();
+	}
+	
+	function insertUserLog($request){
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+		$sql = "INSERT INTO nham_user_log(user_id, action_type, token_id, os_type, model, created_date) VALUES(?,?,?,?,?,?)";
+		
+		$param["user_id"] = $request["user_id"];
+		$param["action_type"] = $request["action_type"];
+		$param["token_id"] = $request["token_id"];
+		$param["os_type"] = $request["os_type"];
+		$param["model"] = $request["model"];
+		$param["created_date"] = $current_time;
+		
+		$query = $this->db->query($sql , $param);
+		return ($this->db->affected_rows() != 1) ? false : true;
+	}
+	
+	
+	function userFeedback($request){
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+		$sql = "INSERT INTO nham_user_feedback(user_id, image_src, description, created_date) VALUES(?,?,?,?)";
+		
+		$param["user_id"] = $request["user_id"];
+		$param["image_src"] = $request["image_src"];
+		$param["description"] = $request["description"];
+		$param["created_date"] = $current_time;
+		
+		$query = $this->db->query($sql , $param);
+		return ($this->db->affected_rows() != 1) ? false : true;
+	}
+	
+	function updateReadNotification($request){
+		
+		$param["already_read"] = $request["already_read"];
+		$param["user_id1"] = $request["user_id"];
+		$param["user_id2"] = $request["user_id"];
+		$param["last_notify_id"] = $request["last_notify_id"];
+		
+		$sql = "update nham_notification n set already_read = ? 
+			where (n.object_id in (select p.post_id from nham_user_post p where p.user_id = ? and p.post_status = 1) or n.user_id = ?) 
+			and (n.already_read = 0 and n.id <= ?)";
+			
+		$query = $this->db->query($sql, $param);
+		return $query;
+	}	
+	
+	function checkIfNotifyUser($request){
+		$sql = "SELECT count(*) count FROM nham_user_post where post_id = ? and user_id = ? limit 1";
+		
+		$param["post_id"] = $request["object_id"];
+		$param["user_id"] = $request["actioner_id"];
+		
+		$query = $this->db->query($sql , $param);
+		return (($query->row()->count) == 0 ? true : false);
 	}
 	
 }

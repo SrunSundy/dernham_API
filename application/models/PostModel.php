@@ -12,13 +12,18 @@ class PostModel extends CI_Model{
 		$sql = "INSERT INTO nham_user_post(
 				post_caption, 
 				shop_id, 
-				user_id
+				user_id,
+                post_created_date
 				) 
-			VALUES(?, ?, ?)";
+			VALUES(?, ?, ?, ?)";
+		
+		$current_time = new DateTime();
+		$current_time = $current_time->format('Y-m-d H:i:s');
 		
 		$param["post_caption"] = $request["caption"];
 		$param["shop_id"] = $request["shop_id"];
 		$param["user_id"] = $request["user_id"];
+		$param["post_created_date"] = $current_time;
 		
 		
 		$query = $this->db->query($sql , $param);			
@@ -90,11 +95,38 @@ class PostModel extends CI_Model{
 		return $query->row();
 	}
 	
+	function isUserSaved( $request ){
+		
+		$sql = "SELECT count(*) AS is_saved
+			FROM nham_saved_post WHERE object_id = ? AND user_id = ? AND saved_type = ? AND status = 1";
+			
+		$param["object_id"] = $request["object_id"];
+		$param["user_id"] = $request["user_id"]; 
+		$param["saved_type"] = $request["saved_type"]; 
+		$query = $this->db->query($sql, $param);
+		return $query->row();
+	}
+	
+	function isUserReported( $request ){
+		
+		$sql = "SELECT count(*) AS is_reported
+			FROM nham_report_post WHERE post_id = ? AND user_id = ? AND status = 1";
+			
+		$param["post_id"] = $request["post_id"];
+		$param["user_id"] = $request["user_id"]; 
+		$query = $this->db->query($sql, $param);
+		return $query->row();
+	}
+	
 	
 	function updateUserPost( $request ){
-		
-		$sql = "UPDATE nham_user_post SET post_caption=? , shop_id=? WHERE post_id =? ";
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    
+		$sql = "UPDATE nham_user_post SET post_caption=? , post_updated_date=? ,shop_id=? WHERE post_id =? ";
 		$param["post_caption"] = $request["caption"];
+		$param["post_updated_date"] = $current_time;
 		$param["shop_id"] = $request["shop_id"];
 		$param["post_id"] = $request["post_id"];
 		
@@ -104,14 +136,18 @@ class PostModel extends CI_Model{
 	}
 	
 	function userLike( $request ){
-		$sql = " INSERT INTO nham_user_like(user_id,post_id) 
-				SELECT ?, ? FROM dual 
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+		$sql = " INSERT INTO nham_user_like(user_id,post_id,created_date) 
+				SELECT ?, ?, ? FROM dual 
 				WHERE (
 					SELECT count(*) from nham_user_like
 					WHERE user_id = ? AND post_id = ?
 				) < 1 ";
 		$param["user_id"] = $request["user_id"];
 		$param["post_id"] = $request["post_id"];
+		$param["created_date"] = $current_time;
 		$param["user_id_1"] = $request["user_id"];
 		$param["post_id_1"] = $request["post_id"];
 		$query = $this->db->query($sql , $param);
@@ -165,10 +201,14 @@ class PostModel extends CI_Model{
 	}
 	
 	function userComment( $request ){
-	$sql = "INSERT INTO nham_comment(user_id, post_id, text) values(?, ?, ?)" ;
+	    
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	$sql = "INSERT INTO nham_comment(user_id, post_id, text, created_date) values(?, ?, ?, ?)" ;
 		$param["user_id"] = $request["user_id"];
 		$param["post_id"] = $request["post_id"];
 		$param["text"] = $request["text"];
+		$param["created_date"] = $current_time;
 		$query = $this->db->query($sql , $param);
 		return ($this->db->affected_rows() != 1) ? false : true;
 	}
@@ -271,6 +311,7 @@ class PostModel extends CI_Model{
 		$row = (int)$request["row"];
 		$page = (int)$request["page"];
 		$user_id = $request["user_id"];
+		$saved_type = "post";
 		
 		if(!$row) $row = 10;
 		if(!$page) $page = 1;
@@ -281,19 +322,19 @@ class PostModel extends CI_Model{
 		$param = array();
 		$sql = "SELECT
 					sp.id,
-					sp.post_id,
+					sp.object_id,
 					pi.post_image_src,
 					p.user_id,
 					u.user_fullname,
-                    u.user_photo,
-                    sp.created_date
+		                        u.user_photo,
+		                        sp.created_date
                     										
 				FROM nham_saved_post sp
-				LEFT JOIN nham_user_post p ON sp.post_id = p.post_id
+				LEFT JOIN nham_user_post p ON sp.object_id = p.post_id
 				LEFT JOIN nham_user u ON p.user_id = u.user_id
 				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
-				LEFT JOIN nham_user_post_image pi ON sp.post_id = pi.post_id
-				WHERE sp.status = 1 and sp.user_id = ".$user_id." GROUP BY sp.post_id ORDER BY sp.created_date DESC ";
+				LEFT JOIN nham_user_post_image pi ON sp.object_id = pi.post_id
+				WHERE sp.saved_type = '".$saved_type."' AND p.post_status =  1  AND sp.user_id = ".$user_id." ORDER BY sp.created_date DESC ";
 		
 		
 		$query_record = $this->db->query($sql);
@@ -413,8 +454,8 @@ class PostModel extends CI_Model{
 	    
 	}
 	
-	function getUserNotification($request){
-		$sql = "SELECT 	u.user_fullname
+	function getUserInfo($request){
+		$sql = "SELECT u.user_fullname
 				FROM nham_user u
 				WHERE u.user_id = ? LIMIT 1";
 		
@@ -424,8 +465,9 @@ class PostModel extends CI_Model{
 	}
 	
 	function getTokenNotification($request){
-		$sql = "SELECT t.token_id FROM nham_device_token t WHERE t.user_id in 
-			(SELECT p.user_id from nham_user_post p where p.post_id = ?)";
+		$sql = "SELECT distinct ul.token_id FROM nham_user_log ul WHERE ul.user_id in 
+			(SELECT p.user_id from nham_user_post p where p.post_id = ?)
+			order by ul.created_date DESC limit 1";
 		
 		$param["post_id"] = $request["post_id"];
 		$query = $this->db->query($sql , $param);
@@ -433,26 +475,82 @@ class PostModel extends CI_Model{
 	}
 	
 	function notifyUser($request){
-		$des = array("","liked","commented","followed");
+		$des = array("","liked your post.","commented on your post.","followed you.", "created a post.");
 		$sql = "INSERT INTO nham_notification(
 				actioner_id, 
+				user_id, 
 				object_id, 
 				action_id,
 				description
 				) 
-			VALUES(?, ?, ?, ?)";
+			VALUES(?, ?, ?, ?, ?)";
 		
-		$param["actioner_id"] = $request["user_id"];
+		$param["actioner_id"] = $request["actioner_id"];
+		$param["user_id"] = $request["user_id"];
 		$param["object_id"] = $request["object_id"];
 		$param["action_id"] = $request["action_id"];
 		$param["description"] = $des[$request["action_id"]];
-		
 		
 		$query = $this->db->query($sql , $param);			
 	    	$inserted_id = $this->db->insert_id();		
 		return $inserted_id;
 	}
 	
+	function notifyFollowers($request){
+		$des = array("","liked your post.","commented on your post.","followed you.", "created a post.");
+		
+		$sql = "INSERT INTO nham_notification(actioner_id, user_id, object_id, action_id, description)
+			SELECT following_id, follower_id, ?, ?, ? FROM nham_user_follow where following_id = ?";
+		
+		$param["object_id"] = $request["object_id"];
+		$param["action_id"] = $request["action_id"];
+		$param["description"] = $des[$request["action_id"]];	
+		$param["following_id"] = $request["user_id"];		
+		
+		$query = $this->db->query($sql , $param);			
+	    	$inserted_id = $this->db->insert_id();		
+		return $inserted_id;
+	}
+	
+	
+	function listPostByID( $request ){
+	
+		$sql = "SELECT
+					p.post_id,
+					p.post_caption,
+					p.post_created_date,
+					p.shop_id,
+					s.shop_name_en,
+					s.shop_name_kh,
+					s.shop_address,
+					s.shop_status,
+					p.user_id,
+					u.user_fullname,
+					u.user_photo,
+					u.user_status,
+					p.post_count_view,
+					p.post_count_share
+										
+				FROM nham_user_post p
+				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
+				LEFT JOIN nham_user u ON p.user_id = u.user_id
+				WHERE p.post_status = 1 and p.post_id = ?";
+				
+		$param["post_id"] = $request["post_id"];
+		$query = $this->db->query($sql, $param);		
+		$response["response_data"] = $query->result();
+		return $response;
+	}
+	
+	function removeNotification( $request ){
+		$sql = "DELETE from nham_notification where actioner_id = ? and object_id = ? and action_id = ?";
+		$param["actioner_id"] = $request["user_id"];
+		$param["object_id"] = $request["post_id"];
+		$param["action_id"] = $request["action_id"];
+		
+		$query = $this->db->query($sql , $param);
+		return $query;
+	}
 	
 	
 	
