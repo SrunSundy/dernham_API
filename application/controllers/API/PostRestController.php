@@ -287,6 +287,7 @@ class PostRestController extends REST_Controller{
 		//row=20&
 		//page=2&
 		//user_id
+		//order_type
 		//user_timezone=
 		
 		$request["row"] = $this->input->get('row');
@@ -322,20 +323,20 @@ class PostRestController extends REST_Controller{
 				$request_dcom["page"] = 1;
 				$request_dcom["order_type"]= 1;
 				$item->comment_item = $this->CommentModel->listCommentByPostId($request_dcom)["response_data"];
-				$item->like_count = $this->PostModel->countLike($request_com)->count;
+				//$item->like_count = $this->PostModel->countLike($request_com)->count;
 				
-				$request_islike["post_id"] = $item->post_id;
+				/*$request_islike["post_id"] = $item->post_id;
 				$request_islike["user_id"] = $this->input->get("user_id");
-				$item->is_liked = $this->PostModel->isUserLiked($request_islike)->is_liked;
+				$item->is_liked = $this->PostModel->isUserLiked($request_islike)->is_liked;*/
 								
-				$request_issaved["object_id"] = $item->post_id;
+				/*$request_issaved["object_id"] = $item->post_id;
 				$request_issaved["user_id"] = $this->input->get("user_id");
 				$request_issaved["saved_type"] = "post";
-				$item->is_saved = $this->PostModel->isUserSaved($request_issaved)->is_saved;
+				$item->is_saved = $this->PostModel->isUserSaved($request_issaved)->is_saved;*/
 				
-				$request_isreported["post_id"] = $item->post_id;
+			/*	$request_isreported["post_id"] = $item->post_id;
 				$request_isreported["user_id"] = $this->input->get("user_id");
-				$item->is_reported = $this->PostModel->isUserReported($request_isreported)->is_reported;
+				$item->is_reported = $this->PostModel->isUserReported($request_isreported)->is_reported;*/
 				
 				$item->post_created_date = tz($item->post_created_date, $request["user_timezone"]);
 				

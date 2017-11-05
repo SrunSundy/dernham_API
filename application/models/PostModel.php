@@ -42,6 +42,8 @@ class PostModel extends CI_Model{
 		$limit = $row;
 		$offset = ($row*$page)-$row;
 		
+		$order_type = " p.post_id DESC ";
+		
 		$param = array();
 		$sql = "SELECT
 					p.post_id,
@@ -57,13 +59,21 @@ class PostModel extends CI_Model{
 					u.user_photo,
 					u.user_status,
 					p.post_count_view,
-					p.post_count_share
+					p.post_count_share,
+				   (SELECT count(user_id) as count FROM nham_user_like where post_id = p.post_id) AS like_count,
+				   (SELECT count(*) AS is_liked FROM nham_user_like WHERE p.post_id = p.post_id AND user_id = p.user_id) AS is_liked,
+				   (SELECT count(*) AS is_saved
+						FROM nham_saved_post WHERE object_id = ? AND user_id = ? AND saved_type = 'post' AND status = 1) AS is_saved,
+				   (SELECT count(*) AS is_reported
+						FROM nham_report_post WHERE post_id = p.post_id AND user_id = ? AND status = 1) AS is_reported			  
 										
 				FROM nham_user_post p
 				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
 				LEFT JOIN nham_user u ON p.user_id = u.user_id
-				WHERE p.post_status = 1
-				ORDER BY p.post_id DESC ";
+				WHERE p.post_status = 1 ";
+		
+		
+			
 		
 		$query_record = $this->db->query($sql);
 		$total_record = count($query_record->result());
@@ -75,6 +85,21 @@ class PostModel extends CI_Model{
 		$response["total_record"] = $total_record;
 		$response["total_page"] = (int)$total_page;
 		
+		//0 means latest
+		//1 means popular
+		//2 means user that we follow
+		if(isset($request["order_type"])){
+			$orderNum = (int)$request["order_type"];
+			switch($orderNum){
+				case 0 : $order_type = "  p.post_id DESC ";
+				case 1 : $order_type = "  like_count DESC, p.post_count_view DESC, p.post_count_share DESC ";
+				case 2 : $order_type = " ";
+				default: $order_type = "  p.post_id DESC  ";
+			}
+			
+		}
+		
+		$sql .= "\n ORDER BY ".$order_type;
 		$sql .= "LIMIT ? OFFSET ?";
 		array_push($param, $limit , $offset);
 		$query = $this->db->query($sql, $param);
