@@ -60,13 +60,15 @@ class PostModel extends CI_Model{
 					u.user_status,
 					p.post_count_view,
 					p.post_count_share,
-				   (SELECT count(user_id) as count FROM nham_user_like where post_id = p.post_id) AS like_count,
-				   (SELECT count(*) AS is_liked FROM nham_user_like WHERE p.post_id = p.post_id AND user_id = p.user_id) AS is_liked,
+				   (SELECT count(ul.user_id) as count FROM nham_user_like ul where ul.post_id = p.post_id) AS like_count,
+				 (SELECT count(*) AS is_liked FROM nham_user_like ul WHERE ul.post_id = p.post_id AND ul.user_id = ?) AS is_liked,
 				   (SELECT count(*) AS is_saved
-						FROM nham_saved_post WHERE object_id = ? AND user_id = ? AND saved_type = 'post' AND status = 1) AS is_saved,
+						FROM nham_saved_post sp WHERE sp.object_id = p.post_id AND sp.user_id = ? AND sp.saved_type = 'post' AND sp.status = 1) AS is_saved,
 				   (SELECT count(*) AS is_reported
-						FROM nham_report_post WHERE post_id = p.post_id AND user_id = ? AND status = 1) AS is_reported			  
-										
+						FROM nham_report_post rp WHERE rp.post_id = p.post_id AND rp.user_id = ? AND rp.status = 1) AS is_reported,			  
+				   (SELECT count(*) FROM nham_user_follow uf WHERE uf.follower_id = ? AND uf.following_id = p.user_id ) AS is_followed
+                  
+		
 				FROM nham_user_post p
 				LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
 				LEFT JOIN nham_user u ON p.user_id = u.user_id
@@ -74,8 +76,8 @@ class PostModel extends CI_Model{
 		
 		
 			
-		
-		$query_record = $this->db->query($sql);
+		array_push($param,  $request["user_id"], $request["user_id"] , $request["user_id"],  $request["user_id"]);
+		$query_record = $this->db->query($sql, $param);
 		$total_record = count($query_record->result());
 		$total_page = $total_record / $row;
 		if( ($total_record % $row) > 0){
@@ -88,13 +90,30 @@ class PostModel extends CI_Model{
 		//0 means latest
 		//1 means popular
 		//2 means user that we follow
+		//3 means post that is nearby
 		if(isset($request["order_type"])){
 			$orderNum = (int)$request["order_type"];
 			switch($orderNum){
-				case 0 : $order_type = "  p.post_id DESC ";
-				case 1 : $order_type = "  like_count DESC, p.post_count_view DESC, p.post_count_share DESC ";
-				case 2 : $order_type = " ";
-				default: $order_type = "  p.post_id DESC  ";
+				case 0 : $order_type = "  p.post_id DESC ";break;
+				case 1 : $order_type = "  like_count DESC, p.post_count_view DESC, p.post_count_share DESC ";break;
+				case 2 : {
+				    $order_type = "  is_followed DESC , p.post_id DESC ";
+				    break;
+				}
+				case 3 : {
+				    
+				    if(!isset($request["current_lat"]) || !isset($request["current_lng"])) break;
+				    
+				    $current_lat = (float)$request["current_lat"];
+				    $current_lng = (float)$request["current_lng"];
+				    				  				    
+				    $order_type= " (CASE WHEN s.shop_id IS NOT NULL THEN 1 ELSE 0 END) DESC ,
+				                   (SQRT(POW(69.1 * (s.shop_lat_point - ? ), 2) +
+                                    POW(69.1 * ( ? - s.shop_lng_point) * COS(s.shop_lat_point / 57.3), 2))*1.61) "; 
+				    array_push($param, $current_lat, $current_lng);
+				    break;
+				} 
+				default: $order_type = "  p.post_id DESC  ";break;
 			}
 			
 		}
@@ -106,6 +125,58 @@ class PostModel extends CI_Model{
 		
 		$response["response_data"] = $query->result();
 		return $response;
+	}
+	
+	function nearestFriendPost($request){
+	    
+	    $current_lat = (float)$request["current_lat"];
+	    $current_lng = (float)$request["current_lng"];
+	    
+	    $row = (int)$request["row"];
+	    $page = (int)$request["page"];
+	    
+	    if(!$row) $row = 10;
+	    if(!$page) $page = 1;
+	    
+	    if(!$current_lat || $current_lat > 90 || $current_lat <-90) $current_lat= 0;
+	    if(!$current_lng || $current_lng > 180 || $current_lng < -180) $current_lng= 0;
+	    
+	    $limit = $row;
+	    $offset = ($row*$page)-$row;
+	    
+	    $sql = " SELECT 
+                      up.post_id,
+                      up.user_id,
+                      u.user_fullname,
+                      u.user_photo,
+                      SQRT(
+                    	POW(69.1 * (sh.shop_lat_point - ? ), 2) +
+                    	POW(69.1 * ( ? - sh.shop_lng_point) * COS(sh.shop_lat_point / 57.3), 2))*1.61 AS distance
+                    FROM nham_user_post up
+                    INNER JOIN nham_user u ON up.user_id = u.user_id
+                    INNER JOIN nham_shop sh ON up.shop_id= sh.shop_id
+                    WHERE up.user_id IN( SELECT following_id FROM nham_user_follow WHERE follower_id = ?)                 
+                    ORDER BY distance ";
+	    
+	    $param = array();
+	    array_push($param, $current_lat, $current_lng ,$request["user_id"]);
+	    
+	    $query_record = $this->db->query($sql, $param);
+	    $total_record = count($query_record->result());
+	    $total_page = $total_record / $row;
+	    if( ($total_record % $row) > 0){
+	        $total_page += 1;
+	    }
+	    
+	    $response["total_record"] = $total_record;
+	    $response["total_page"] = (int)$total_page;
+	    
+	    $sql .= "LIMIT ? OFFSET ?";
+	    array_push($param, $limit , $offset);
+	    $query = $this->db->query($sql, $param);
+	    
+	    $response["response_data"] = $query->result();
+	    return $response;
 	}
 	
 	

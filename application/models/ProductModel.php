@@ -34,7 +34,8 @@ class ProductModel extends CI_Model{
 					pro.pro_short_description,
 					s.shop_id,
 					s.shop_name_en,
-					s.shop_name_kh
+					s.shop_name_kh,
+                    s.shop_logo
 					
 				FROM nham_product pro 
                 LEFT JOIN nham_shop s ON pro.shop_id = s.shop_id ";
@@ -241,7 +242,7 @@ class ProductModel extends CI_Model{
 				AND pro.shop_id = ? ";
 		
 		array_push($params, $shop_id);
-		if($is_pop == "true" || $is_pop){
+		if($is_pop){
 			$sql .= " AND pro.pro_local_popularity = 1 ";									
 		}
 		
