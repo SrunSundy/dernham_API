@@ -353,6 +353,12 @@ class ShopRestController extends REST_Controller{
 		
 	}
 	
+    public function getshopmap_get(){
+        //shop_id = 1
+        //current_lat
+        //current_lng
+    }
+	
 	public function getshop_post(){
 		
 		/* {
@@ -463,11 +469,11 @@ class ShopRestController extends REST_Controller{
 			$request_img["shop_id"] = $shop_id;
 			$request_img["row"] = 3 ;
 			$request_img["page"] = 1 ;
-			$request_img["img_type"] = imagetype::Detail;			 
+			//$request_img["img_type"] = imagetype::Detail;			 
 			$item->shop_related_img["total_record"] = $this->ShopImageModel->countListShopDetailImgByShopid($request_img)->total_record;
 			$item->shop_related_img["data"] = $this->ShopImageModel->listShopDetailImgByShopid($request_img);
 				
-			$request_pro["shop_id"] = $shop_id;
+			/*$request_pro["shop_id"] = $shop_id;
 			$request_pro["is_popular"] = false ;
 			$request_pro["page"] = 1 ;
 			$request_pro["row"] = 10;
@@ -476,7 +482,7 @@ class ShopRestController extends REST_Controller{
 			$shop_popular_product = $this->ProductModel->listProductByShopid($request_pro);
 			$item->shop_popular_product["total_record"] = $this->ProductModel->getTotalProduct($request_pro_cnt)->total_record;
 			$item->shop_popular_product["data"] = $shop_popular_product["response_data"];
-			$item->shop_popular_product["total_page"] = $shop_popular_product["total_page"];
+			$item->shop_popular_product["total_page"] = $shop_popular_product["total_page"];*/
 			
 			//==================not yet need related shops=============
 			/*

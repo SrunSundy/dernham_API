@@ -25,14 +25,18 @@ class ShopImageModel extends CI_Model{
 		$sql = "SELECT 
 					img.sh_img_id,
 					img.sh_img_name,
-					img.sh_img_created_date
+					img.sh_img_created_date,
+					img.sh_img_type
 				FROM nham_shop_image img
 				WHERE img.sh_img_status = 1
-				AND img.sh_img_type = ?
 				AND img.shop_id = ? ";
 		
-		
-		array_push($param, (int)$request["img_type"] , (int)$request["shop_id"]);
+		if(isset($request["img_type"])){
+		    $sql .=" AND img.sh_img_type = ? ";
+		    array_push($param, (int)$request["shop_id"] , (int)$request["img_type"] );
+		}else{
+		    array_push($param, (int)$request["shop_id"]);
+		}		
 		
 		$this->load->helper('yesnoimagefrontshow');
 		if(isset($request["is_front_show"]) && $request["is_front_show"] == yesnoimagefrontshow::YES ){ 
@@ -46,7 +50,7 @@ class ShopImageModel extends CI_Model{
 			array_push($param, (int)$request["has_defined"]);			
 		}
 		
-		$sql .=	" ORDER BY img.sh_img_dis_order  ";
+		$sql .=	" ORDER BY img.sh_img_type DESC,img.sh_img_dis_order ";
 		$sql .= " LIMIT ? OFFSET ? ";
 		
 		array_push($param, $limit, $offset);
@@ -69,17 +73,20 @@ class ShopImageModel extends CI_Model{
 	
 	public function countListShopDetailImgByShopid( $request ){
 		
+	    $param = array();
 		$sql = "SELECT count(*) as total_record,
 					CASE WHEN count(*)% ? != 0 THEN count(*)/ ? +1 ELSE count(*)/ ? END as total_page 
 				FROM nham_shop_image
-				WHERE sh_img_status = 1
-				AND sh_img_type = ?
+				WHERE sh_img_status = 1				
 				AND shop_id = ?";
-		$query = $this->db->query($sql, array($request["row"]
-				, $request["row"]
-				, $request["row"]
-				, (int)$request["img_type"] 
-				, (int)$request["shop_id"]) );
+		
+		array_push($param, $request["row"], $request["row"], $request["row"], (int)$request["shop_id"]);
+		if(isset($request["img_type"])){
+		    $sql .= " AND sh_img_type = ? ";
+		    array_push($param, (int)$request["img_type"] );
+		}
+		
+		$query = $this->db->query($sql, $param );
 		$response = $query->row();
 		
 		return $response;

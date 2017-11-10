@@ -287,12 +287,23 @@ class PostRestController extends REST_Controller{
 		//row=20&
 		//page=2&
 		//user_id
-		//order_type
+	    //order_type  //**** 0 means latest
+	                  //**** 1 means popular
+	                  //**** 2 means user that we follow
 		//user_timezone=
+		//*******NOTE******** ==> Only for nearby sorting.
+	    //current_lng 
+	    //current_lat
 		
 		$request["row"] = $this->input->get('row');
 		$request["page"] = $this->input->get('page');
 		$request["user_timezone"] = $this->input->get('user_timezone');
+		$request["user_id"] = $this->input->get("user_id");
+		$request["order_type"] = $this->input->get("order_type");
+		$request["current_lng"] = $this->input->get('current_lng');
+		$request["current_lat"] = $this->input->get("current_lat");
+		
+		if(!isset($request["user_id"])) $request["user_id"] = "0000000";
 		
 		$responsequery = $this->PostModel->listUserPost($request);
 		
@@ -346,6 +357,50 @@ class PostRestController extends REST_Controller{
 		$response["response_data"] = $response_data;
 		$this->response($response, 200);
 		
+	}
+	
+	function listnearestfriendpost_get(){
+	    
+	    //row 
+	    //page
+	    //current_lng
+	    //current_lat
+	    //user_id 
+	    
+	    $request["row"] = $this->input->get('row');
+	    $request["page"] = $this->input->get('page');
+	    $request["current_lng"] = $this->input->get('current_lng');
+	    $request["current_lat"] = $this->input->get("current_lat");
+	    $request["user_id"] = $this->input->get("user_id");
+	   	    
+	    if(!isset($request["user_id"])) $request["user_id"] = "0000000";
+	    
+	    $responsequery = $this->PostModel->nearestFriendPost($request);
+	    
+	    $response["response_code"] = "200";
+	    $response["total_record"] = $responsequery["total_record"];
+	    $response["total_page"] = $responsequery["total_page"];
+	    
+	    $response_data = $responsequery["response_data"];
+	    
+	    if(count($response_data) > 0){
+	       
+	        $this->load->model("PostImageModel");	        
+	        foreach($response_data as $item){
+	          
+	            $request_pimg["post_id"] = $item->post_id;
+	            $request_pimg["row"] = 9999999999;
+	            $request_pimg["page"] = 1;
+	            $item->post_img = $this->PostImageModel->listUserPostImageByPostid($request_pimg)["response_data"];            	        
+	            
+	        }
+	    }
+	    
+	   
+	    $response["response_data"] = $response_data;
+	    $this->response($response, 200);
+	    
+	    
 	}
 	
 	function listexpandedsavedpost_get(){

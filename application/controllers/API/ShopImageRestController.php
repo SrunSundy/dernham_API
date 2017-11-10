@@ -51,12 +51,12 @@ class ShopImageRestController extends REST_Controller{
 			$this->response($response, 400);
 			die();
 		}
-		if(!isset($request["img_type"])) {
+	/*	if(!isset($request["img_type"])) {
 			$response["response_code"] = "400";
 			$response["error"] = "img_type is required!";
 			$this->response($response, 400);
 			die();
-		}
+		}*/
 		
 		
 		//$this->load->helper('imagetype');

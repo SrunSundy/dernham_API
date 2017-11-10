@@ -84,9 +84,9 @@ class ProductRestController extends REST_Controller{
 			die();
 		}
 		
-		$is_popular = true;
-		if(!isset($request["is_popular"]) || $request["is_popular"] == null){
-			$is_popular = false;
+		$is_popular = false;
+		if(isset($request["is_popular"])){
+			$is_popular = $request["is_popular"];
 		}
 		$request["is_popular"] = $is_popular;
 		
@@ -244,7 +244,7 @@ class ProductRestController extends REST_Controller{
 			$reqest_related_pro["is_popular"] = 1;
 			$related_products = $this->ProductModel->listProductByShopid($reqest_related_pro);
 								
-			$response["product_detail"] = $product_detail;
+			$response["product_detail"] = $product_detail[0];
 			$response["related_products"] = $related_products;
 			$response["response_code"] = "200";
 			$response["response_msg"] = "list successfully";
