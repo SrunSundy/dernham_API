@@ -416,7 +416,7 @@ class UserModel extends CI_Model{
                 LEFT JOIN nham_user_post up ON a.user_id = up.user_id
                 WHERE up.post_status = 1
                 GROUP BY up.user_id 
-                ORDER BY post_cnt DESC,a.follower_cnt DESC ";
+                ORDER BY count(up.user_id)+(a.follower_cnt*3) DESC ";
 		
 		
 		$query_record = $this->db->query($sql);
