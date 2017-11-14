@@ -411,7 +411,7 @@ class UserModel extends CI_Model{
                 	 count(uf.follower_id) AS follower_cnt
                 	FROM nham_user u
                 	LEFT JOIN nham_user_follow uf ON u.user_id = uf.following_id
-                    WHERE uf.status = 1
+                	WHERE u.user_status = 1
                 	GROUP BY u.user_id) a
                 LEFT JOIN nham_user_post up ON a.user_id = up.user_id
                 WHERE up.post_status = 1
