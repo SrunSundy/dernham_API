@@ -50,7 +50,7 @@ class ShopImageModel extends CI_Model{
 			array_push($param, (int)$request["has_defined"]);			
 		}
 		
-		$sql .=	" ORDER BY img.sh_img_type DESC,img.sh_img_dis_order ";
+		$sql .=	" ORDER BY img.sh_img_type DESC,img.sh_img_id DESC";
 		$sql .= " LIMIT ? OFFSET ? ";
 		
 		array_push($param, $limit, $offset);
