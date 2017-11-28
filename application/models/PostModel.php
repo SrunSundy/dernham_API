@@ -296,7 +296,59 @@ class PostModel extends CI_Model{
 		return $query->result();
 	}
 	
+	
+	
+	// Strips leading zeros
+	// And returns str in UPPERCASE letters with a U+ prefix
+	function format($str) {
+	    $copy = false;
+	    $len = strlen($str);
+	    $res = '';
+	    
+	    for ($i = 0; $i < $len; ++$i) {
+	        $ch = $str[$i];
+	        
+	        if (!$copy) {
+	            if ($ch != '0') {
+	                $copy = true;
+	            }
+	            // Prevent format("0") from returning ""
+	            else if (($i + 1) == $len) {
+	                $res = '0';
+	            }
+	        }
+	        
+	        if ($copy) {
+	            $res .= $ch;
+	        }
+	    }
+	    
+	    return 'U+'.strtoupper($res);
+	}
+	
+	function convert_emoji($emoji) {
+	    // ✊🏾 --> 0000270a0001f3fe
+	    $emoji = mb_convert_encoding($emoji, 'UTF-32', 'UTF-8');
+	    $hex = bin2hex($emoji);
+	    
+	    // Split the UTF-32 hex representation into chunks
+	    $hex_len = strlen($hex) / 8;
+	    $chunks = array();
+	    
+	    for ($i = 0; $i < $hex_len; ++$i) {
+	        $tmp = substr($hex, $i * 8, 8);
+	        
+	        // Format each chunk
+	        $chunks[$i] = $this->format($tmp);
+	    }
+	    
+	    // Convert chunks array back to a string
+	    return implode($chunks, ' ');
+	}
+	
 	function userComment( $request ){
+	    
+	    
 	    
 	    $current_time = new DateTime();
 	    $current_time = $current_time->format('Y-m-d H:i:s');

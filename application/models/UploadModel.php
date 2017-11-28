@@ -401,11 +401,14 @@ class UploadModel extends CI_Model{
 					}
 						
 						
-					$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $file["file"]["tmp_name"][$i] , $my_img_size, 80);
+					/*$big = $this->resizeImageFixpixel($target_big_dir.$new_name, $file["file"]["tmp_name"][$i] , $my_img_size, 80);
 					$medium = $this->resizeImageFixpixel($target_medium_dir.$new_name, $file["file"]["tmp_name"][$i] , $my_img_medium_size, 80);		
-					$small = $this->resizeImageFixpixelAndScaleCenter($target_small_dir.$new_name, $file["file"]["tmp_name"][$i] , 180, 80);
+					$small = $this->resizeImageFixpixelAndScaleCenter($target_small_dir.$new_name, $file["file"]["tmp_name"][$i] , 180, 80);*/
 					//	$small = $this->resizeImageFixpixel($target_small_dir.$new_name, $_FILES["file"]["tmp_name"][$i] , 180, 80);
 					//	$extreme_small = $this->resizeImageFixpixel($target_extreme_small_dir.$new_name, $_FILES["file"]["tmp_name"][$i] , 160, 80);
+					$im = new imagick($file["file"]["tmp_name"][$i]);
+					
+					$im->writeImage($target_medium_dir.$new_name);
 						
 					$errorupload = false;
 					array_push($isuploadimg, $big, $medium, $small);
