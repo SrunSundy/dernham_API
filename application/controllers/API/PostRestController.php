@@ -656,6 +656,7 @@ class PostRestController extends REST_Controller{
 		        $this->load->helper('timecalculator');
 		        foreach($data as $item){
 		            $item->created_date = tz($item->created_date, $request["user_timezone"]);
+		            $item->fill = json_decode('U+1F602 U+2764 U+FE0F');
 		        }
 		    }
 		    
@@ -688,6 +689,7 @@ class PostRestController extends REST_Controller{
 			die();
 		}
 		$request = $request["request_data"];
+		
 		
 		$this->load->helper('validate');
 		if(!isset($request["user_id"]) || IsNullOrEmptyString($request["user_id"]) ||
