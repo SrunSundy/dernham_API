@@ -353,12 +353,6 @@ class ShopRestController extends REST_Controller{
 		
 	}
 	
-    public function getshopmap_get(){
-        //shop_id = 1
-        //current_lat
-        //current_lng
-    }
-	
 	public function getshop_post(){
 		
 		/* {
@@ -863,6 +857,67 @@ class ShopRestController extends REST_Controller{
 	    
 	    $this->response($response, 200);
 	}
+	
+	public function user_request_create_shop_post(){
+	   
+	    $request = json_decode($this->input->raw_input_stream,true);
+	    if(!isset($request["request_data"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "bad request";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    $request = $request["request_data"];
+	    $this->load->helper('validate');
+	    if(!isset($request["user_id"]) || !validateNumeric($request["user_id"])||
+	    	!isset($request["shop_name_kh"]) || !validateNumeric($request["shop_name_kh"])||
+	    	!isset($request["shop_name_en"]) || !validateNumeric($request["shop_name_en"])||
+	    	!isset($request["shop_phone"]) || !validateNumeric($request["shop_phone"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "invalid data request";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    	    
+	    $status  = $this->ShopModel->userRequestCreateShop($request);
+	    if($status){
+	        $response["response_code"] = "200";
+	        $response["response_msg"] = "requested successfully";
+	        $this->response($response ,200);
+	    }else{
+	        $response["response_code"] = "000";
+	        $response["response_msg"] = "request failed!";
+	        $this->response($response ,200);
+	    }
+	}
+	public function listevent_get(){
+		
+	//user_timezone = Asia/Phnom_Penh
+	//row = 10
+	//page = 1
+	
+	$request["user_timezone"] = $this->input->get('user_timezone');
+	$request["row"] = $this->input->get("row");
+	$request["page"] = $this->input->get("page");
+	
+	$response["response_code"] = "200";
+	$data = $this->ShopModel->listEvent($request);
+	 
+	$response_data = $data["response_data"];
+	if(count($response_data) > 0){
+		 
+		$this->load->helper('timecalculator');
+		foreach($response_data as $item){
+			$item->created_date = tz($item->created_date, $request["user_timezone"]);
+		}
+	}
+	$response["total_record"] = $data["total_record"];
+	$response["total_page"] = $data["total_page"];
+	$response["response_data"] = $response_data;
+	 
+	$this->response($response, 200);
+}
 	
 }
 ?>
