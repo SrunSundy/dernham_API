@@ -31,6 +31,28 @@ class EmailModel extends CI_Model{
 		//$this->load->view('email_form');
 	} */
 	
+	function sentEmail($recipient, $subject, $content){
+	    
+	
+	    
+	    $header= array('Content-Type: application/x-www-form-urlencoded');
+	    $urlapi="http://dev.dernham.com/sendemail.php";
+	    
+	   
+	    $postdata="recipient_email=$recipient&content=$content&subject=$subject";
+	    
+	    $ch = curl_init($urlapi);
+	    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+	    curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
+	    curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+	    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+	    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+	    curl_setopt($ch, CURLOPT_POST, 1);
+	    
+	    $result = curl_exec($ch);
+	    return $result;
+	}
+	
 	function sendEmailForgetPassword( $request ){
 		$to = $request["user_email"];
 		$subject = "DerNham";	
@@ -58,7 +80,7 @@ class EmailModel extends CI_Model{
 		return mail($to,$subject,$message,$headers);
 	}
 	
-	function sendEmail( $request ){
+	/*function sendEmail( $request ){
 		$to = $request["email"];
 		$subject = "DerNham";	
 		$head = "Dernham sent you the verification code to activate to your account.";	
@@ -82,7 +104,7 @@ class EmailModel extends CI_Model{
 		//$headers .= 'Cc: myboss@example.com' . "\r\n";
 		
 		return mail($to,$subject,$message,$headers);
-	}
+	}*/
 	
 	/* function sendtest(){
 		$config = Array(

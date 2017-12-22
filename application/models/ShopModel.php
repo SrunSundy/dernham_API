@@ -273,7 +273,6 @@ class ShopModel extends CI_Model{
 				FROM nham_shop sh ";
 		
 		$this->load->helper('validate');
-		
 		if( isset($request["serve_category_id"]) && validateNumeric($request["serve_category_id"]) ){
 			$sql .="\n LEFT JOIN nham_serve_cate_map_shop cate  ON cate.shop_id = sh.shop_id ";
 			$sql .="\n WHERE sh.shop_status = 1 ";
@@ -635,6 +634,51 @@ class ShopModel extends CI_Model{
 	    $query = $this->db->query($sql , $param);
 	    return $query;
 	}
+	function listEvent($request){	
+	$row = (int)$request["row"];
+	$page = (int)$request["page"];
+	
+	if(!$row) $row = 10;
+	if(!$page) $page = 1;
+  
+	$limit = $row;
+	$offset = ($row*$page)-$row;
+   
+	
+	$param = array();
+	$sql = "SELECT 
+				ne.evt_id,
+				ne.shop_id,
+				ns.shop_name_en,
+				ns.shop_name_kh,
+				ns.shop_logo,
+				ne.evt_cntt,
+				ne.evt_img,
+				ne.created_date
+			
+			FROM nham_event ne
+			LEFT JOIN nham_shop ns ON ns.shop_id = ne.shop_id 
+			WHERE ne.status = 1 ";
+		   
+	$query_record = $this->db->query($sql , $param);
+	$total_record = count($query_record->result());
+	$total_page = $total_record / $row;
+	if( ($total_record % $row) > 0){
+		$total_page += 1;
+	}
+	
+	$response["total_record"] = $total_record;
+	$response["total_page"] = (int)$total_page;
+	
+	$sql .= " ORDER BY ne.evt_id DESC
+			  LIMIT ? OFFSET ? ";
+	array_push($param , $limit, $offset);
+	
+	$query = $this->db->query($sql , $param);
+	$response["response_data"] = $query->result();
+	
+	return $response;
+}
 
 }
 

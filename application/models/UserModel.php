@@ -401,22 +401,22 @@ class UserModel extends CI_Model{
 		
 		$param = array();
 		$sql = "SELECT 
-                	a.*,
-                	count(up.user_id) AS post_cnt
-                FROM 
-                	(SELECT u.user_id,
-                	 u.user_fullname,
-                	 u.user_photo,
-                	 u.user_quote,
-                	 count(uf.follower_id) AS follower_cnt
-                	FROM nham_user u
-                	LEFT JOIN nham_user_follow uf ON u.user_id = uf.following_id
-                	WHERE u.user_status = 1
-                	GROUP BY u.user_id) a
-                LEFT JOIN nham_user_post up ON a.user_id = up.user_id
-                WHERE up.post_status = 1
-                GROUP BY up.user_id 
-                ORDER BY count(up.user_id)+(a.follower_cnt*3) DESC ";
+					a.*,
+					count(up.user_id) AS post_cnt
+				FROM 
+					(SELECT u.user_id,
+					 u.user_fullname,
+					 u.user_photo,
+					 u.user_quote,
+					 count(uf.follower_id) AS follower_cnt
+					FROM nham_user u
+					LEFT JOIN nham_user_follow uf ON u.user_id = uf.following_id
+					WHERE u.user_status = 1
+					GROUP BY u.user_id) a
+				LEFT JOIN nham_user_post up ON a.user_id = up.user_id
+				WHERE up.post_status = 1
+				GROUP BY up.user_id 
+				ORDER BY count(up.user_id)+(a.follower_cnt*3) DESC ";
 		
 		
 		$query_record = $this->db->query($sql);
