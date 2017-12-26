@@ -31,25 +31,27 @@ class EmailModel extends CI_Model{
 		//$this->load->view('email_form');
 	} */
 	
-	function sentEmail($recipient, $subject, $content){
+	function sentEmail($recipient){
 	    
 	
 	    
-	    $header= array('Content-Type: application/x-www-form-urlencoded');
-	    $urlapi="http://dev.dernham.com/sendemail.php";
+	    $header= array('Content-Type: application/json', 'X-API-KEY:123456');
+	    $urlapi="dev.dernham.com/service/API/EmailRestController/senddeliveryemail";
+	    
+	    $item["recipient_email"] = $recipient;
+	    $request_data["request_data"] = $item;
 	    
 	   
-	    $postdata="recipient_email=$recipient&content=$content&subject=$subject";
 	    
 	    $ch = curl_init($urlapi);
 	    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
 	    curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
-	    curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata);
+	    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($request_data) );
 	    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 	    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 	    curl_setopt($ch, CURLOPT_POST, 1);
 	    
-	    $result = curl_exec($ch);
+	    $result = json_decode(curl_exec($ch));
 	    return $result;
 	}
 	
