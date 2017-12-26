@@ -1,4 +1,3 @@
-
 <?php 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
@@ -30,8 +29,7 @@ class OrderRestController extends REST_Controller{
   function send_delivery_email_post(){
     
     $request = json_decode($this->input->raw_input_stream,true);
-    
-  
+      
     if(!isset($request["request_data"])){
       $response["response_code"] = "400";
       $response["error"] = "bad request";
@@ -170,46 +168,63 @@ class OrderRestController extends REST_Controller{
   public function send_email_post() {
     $request = json_decode($this->input->raw_input_stream,true);
     $request = $request["request_data"];
-    // Storing submitted values
-    $sender_email = "mengky@dernham.com";
-    $user_password = "01021992Men";
-    $receiver_email = $request["user_email"];
-    $username = "DerNham";
-    $subject = "Test Email";
-    $message = "Hello From DerNham. :)";
+          
 
-    // Configure email library
-    //$config['protocol'] = 'smtp';
-    $config['smtp_host'] = 'chi-node9.websitehostserver.net';
-    $config['smtp_port'] = 587;
-    $config['smtp_user'] = $sender_email;
-    $config['smtp_pass'] = $user_password;
+    $result['address'] = "Phnom Penh New Life Church, Preah Trasak Paem St. (63), Phnom Phen City.";
+      $result['order_code'] ="37_2_123123";
+      $result['order_date_time'] ="04-12-2017 10:00 AM";
+      $result['user_name'] ="Sopheamen";
+      $result['user_phone'] ="096 444 4204";
 
-    // Load email library and passing configured values to email library
-    $this->load->library('email', $config);
-    $this->email->set_newline("\r\n");
+      $result['tax'] ="N/A";
+      $result['delivery_fee'] ="$ 1";
+      $result['coupon'] ="N/A";
+      $result['grand_total'] ="$ 35";
 
-    // Sender email address
-    $this->email->from($sender_email, $username);
-    // Receiver email address
-    $this->email->to($receiver_email);
-    // Subject of email
-    $this->email->subject($subject);
-    // Message in email
-    $this->email->message($message);
+      $food1 = [
+        'id' => 1,
+        'pro_name' => 'Milk Green Tea',
+        'pro_size' => 'Medium',
+        'pro_image' => 'https://instagram.fpnh1-1.fna.fbcdn.net/t51.2885-15/s640x640/sh0.08/e35/23160955_382296242199276_2296046476574326784_n.jpg',
+        'shop_name' => 'ABC Store',
+        'note' => 'No Ice',
+        'quantity' => '2',
+        'pro_price' => '$ 10',
+        'total_price' => '$ 20'
+      ];
+      
+      $food2 = [
+        'id' => 2,
+        'pro_name' => 'Ice Latte',        
+        'pro_size' => 'Medium',
+        'pro_image' => 'https://instagram.fpnh1-1.fna.fbcdn.net/t51.2885-15/s640x640/sh0.08/e35/23160955_382296242199276_2296046476574326784_n.jpg',
+        'shop_name' => 'ABC Store',
+        'note' => 'No Ice',
+        'quantity' => '3',
+        'pro_price' => '$ 5',
+        'total_price' => '$ 15'
+      ];
 
-    if ($this->email->send()) {
-       $data['message_display'] = 'Email Successfully Send !';
-    } else {
-        $data['message_display'] =  '<p class="error_msg">Invalid Gmail Account or Password !</p>';
-    }
-    print_r($data);
+    $result['food'] = [$food1, $food2];
+
+    $mesg = $this->load->view('/ordering_header','',true);
+    $mesg .= $this->load->view('/ordering_body',$result,true);
+    $mesg .= $this->load->view('/ordering_footer','',true);
+
+
+    $this->load->model("EmailModel");
+      
+    $subject = "Order From DerNham";
+    $recipient = $request["recipient_email"];
+	
+	echo $mesg;
+    //$this->response($mesg ,200);
 
   }
   
   public function sendmailtest_post(){
       
-      $request = json_decode($this->input->raw_input_stream,true);           
+      $request = json_decode($this->input->raw_input_stream,true);
       if(!isset($request["request_data"])){
           $response["response_code"] = "400";
           $response["error"] = "bad request";
@@ -221,12 +236,99 @@ class OrderRestController extends REST_Controller{
       
       $this->load->model("EmailModel");
       
-      $contentHtml ="<h1>WELCOME TO DERNHAM</h1><p>Thanks for subscribing!</p>";
-      $subject = "SUCCESS";
+      
       $recipient = $request["recipient_email"];
       
-      $this->response( $this->EmailModel->sentEmail($recipient, $subject , $contentHtml) ,200);
+      $response_data = $this->EmailModel->sentEmail($recipient);
+      if(isset($response_data->response_code) && ( $response_data->response_code == "200" || $response_data->response_code == "000")){
+          $this->response($response_data,200);
+      }else{
+          $this->response($response_data,400);
+      }
   }
+  public function sendEmailto_post(){
+	    $request = json_decode($this->input->raw_input_stream,true);           
+		  if(!isset($request["request_data"])){
+			  $response["response_code"] = "400";
+			  $response["error"] = "bad request";
+			  $this->response($response, 400);
+			  die();
+		  }
+
+    $request = $request["request_data"];
+          
+
+    $result['address'] = "Phnom Penh New Life Church, Preah Trasak Paem St. (63), Phnom Phen City.";
+      $result['order_code'] ="37_2_123123";
+      $result['order_date_time'] ="04-12-2017 10:00 AM";
+      $result['user_name'] ="Sopheamen";
+      $result['user_phone'] ="096 444 4204";
+
+      $result['tax'] ="N/A";
+      $result['delivery_fee'] ="$ 1";
+      $result['coupon'] ="N/A";
+      $result['grand_total'] ="$ 35";
+
+      $food1 = [
+        'id' => 1,
+        'pro_name' => 'Milk Green Tea',
+        'pro_size' => 'Medium',
+        'pro_image' => 'https://instagram.fpnh1-1.fna.fbcdn.net/t51.2885-15/s640x640/sh0.08/e35/23160955_382296242199276_2296046476574326784_n.jpg',
+        'shop_name' => 'ABC Store',
+        'note' => 'No Ice',
+        'quantity' => '2',
+        'pro_price' => '$ 10',
+        'total_price' => '$ 20'
+      ];
+      
+      $food2 = [
+        'id' => 2,
+        'pro_name' => 'Ice Latte',        
+        'pro_size' => 'Medium',
+        'pro_image' => 'https://instagram.fpnh1-1.fna.fbcdn.net/t51.2885-15/s640x640/sh0.08/e35/23160955_382296242199276_2296046476574326784_n.jpg',
+        'shop_name' => 'ABC Store',
+        'note' => 'No Ice',
+        'quantity' => '3',
+        'pro_price' => '$ 5',
+        'total_price' => '$ 15'
+      ];
+
+    $result['food'] = [$food1, $food2];
+   $mesg="";
+   // $mesg = $this->load->view('/ordering_header','',true);
+    $mesg .= $this->load->view('/ordering_body',$result,true);
+    $mesg .= $this->load->view('/ordering_footer','',true);
+
+
+    $this->load->model("EmailModel");
+      
+    $subject = "Order From DerNham";
+    $recipient = $request["recipient_email"];
+	
+		  
+		 // $contentHtml = "<h1>WELCOME TO DERNHAM</h1><p>Thanks for subscribing!</p>";
+		  $subject = "SUCCESS";
+		  $recipient = $request["recipient_email"];
+	  
+		$header= array('Content-Type: application/x-www-form-urlencoded'); 
+		$urlapi="http://dev.dernham.com/sendemail.php";
+		
+		$postdata="recipient_email=$recipient&content=".base64_encode($mesg)."&subject=$subject";
+
+	    $ch = curl_init($urlapi);                                                                    
+		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");    
+		curl_setopt($ch, CURLOPT_HTTPHEADER,$header);
+		curl_setopt($ch, CURLOPT_COOKIESESSION, true);
+		curl_setopt($ch, CURLOPT_POSTFIELDS, $postdata); 
+		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);		
+		curl_setopt($ch, CURLOPT_RETURNTRANSFER, true); 
+	
+		curl_setopt($ch, CURLOPT_POST, 1);
+																														
+	    $result = curl_exec($ch);    
+		echo   $result;
+			  
+ }
 
 
 }
