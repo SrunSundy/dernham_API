@@ -158,7 +158,8 @@ class ShopRestController extends REST_Controller{
 				"current_lng" :104.88913536071777,
 				"serve_category_id" : 3,
 				"row" : 10,
-				"page" : 1	
+				"page" : 1,
+				"status" : true ---optional
 			}
 		} */
 		$request = json_decode($this->input->raw_input_stream,true);
@@ -709,6 +710,60 @@ class ShopRestController extends REST_Controller{
 	    }
 	}
 	
+	public function createtempshop_post(){
+	    
+	    /*
+	     {
+	       "request_data" : {
+	           "shop_name_en" : "test"
+	           
+	       }
+	     }
+	     */
+	    $response = array();
+	    $request = json_decode($this->input->raw_input_stream,true);
+	    
+	    if(!isset($request["request_data"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "bad request";
+	        $this->response($response, 400);
+	        die();
+	    }
+	    
+	    $request = $request["request_data"];
+	    $request["shop_status"] = "2";
+	    $request["shop_logo"] = "shop.png";
+	    
+	    if(!isset($request["shop_name_en"])){
+	        $response["response_code"] = "400";
+	        $response["error"] = "bad request";
+	        $this->response($response, 400);
+	        die();
+	    }
+	   
+	    
+	    $isInsert = $this->ShopModel->insertTempShop($request);
+	    $insert_shop_id = $this->db->insert_id();
+	   
+	    if($isInsert){
+	        $response["response_code"] = "200";
+	        
+	        $resp_data = array();
+	        $resp_data["shop_id"] = $insert_shop_id;
+	        $resp_data["shop_name_en"] = $request["shop_name_en"];
+	        $resp_data["shop_name_kh"] = "";
+	        
+	        $response["response_data"] = $resp_data;
+	        $response["response_msg"] = "Success.";
+	    }else{
+	        $response["response_code"] = "000";
+	        $response["response_msg"] = "Error ! Fail to insert.";
+	    }
+	   
+	    $this->response($response, 200);
+	    
+	}
+	
 	public function createshop_post(){
 		
 		/* {
@@ -791,7 +846,7 @@ class ShopRestController extends REST_Controller{
 		}else{
 			
 			$response["response_code"] = "000";
-			$response["response_code"] = "Error ! Fail to insert.";
+			$response["response_msg"] = "Error ! Fail to insert.";
 		}
 		
 		
@@ -892,32 +947,29 @@ class ShopRestController extends REST_Controller{
 	    }
 	}
 	public function listevent_get(){
+	
+		$request["user_timezone"] = $this->input->get('user_timezone');
+		$request["row"] = $this->input->get("row");
+		$request["page"] = $this->input->get("page");
+		$request["event_id"] = $this->input->get("event_id");
 		
-	//user_timezone = Asia/Phnom_Penh
-	//row = 10
-	//page = 1
-	
-	$request["user_timezone"] = $this->input->get('user_timezone');
-	$request["row"] = $this->input->get("row");
-	$request["page"] = $this->input->get("page");
-	
-	$response["response_code"] = "200";
-	$data = $this->ShopModel->listEvent($request);
-	 
-	$response_data = $data["response_data"];
-	if(count($response_data) > 0){
-		 
-		$this->load->helper('timecalculator');
-		foreach($response_data as $item){
-			$item->created_date = tz($item->created_date, $request["user_timezone"]);
+		$response["response_code"] = "200";
+		$data = $this->ShopModel->listEvent($request);
+		
+		$response_data = $data["response_data"];
+		if(count($response_data) > 0){
+			
+			$this->load->helper('timecalculator');
+			foreach($response_data as $item){
+				$item->created_date = tz($item->created_date, $request["user_timezone"]);
+			}
 		}
+		$response["total_record"] = $data["total_record"];
+		$response["total_page"] = $data["total_page"];
+		$response["response_data"] = $response_data;
+		
+		$this->response($response, 200);
 	}
-	$response["total_record"] = $data["total_record"];
-	$response["total_page"] = $data["total_page"];
-	$response["response_data"] = $response_data;
-	 
-	$this->response($response, 200);
-}
 	
 }
 ?>

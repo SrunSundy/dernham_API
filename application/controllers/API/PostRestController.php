@@ -701,8 +701,6 @@ class PostRestController extends REST_Controller{
 
     $data = $this->PostModel->userComment($request);
     if($data){
-    
-      
       //insert into notification tb
       $request["actioner_id"]=$request["user_id"];
       $request["object_id"]=$request["post_id"];
@@ -727,6 +725,7 @@ class PostRestController extends REST_Controller{
       
       $response["response_code"] = "200";
       $response["response_msg"] = "comment successfully!";
+
       $this->response($response ,200);
       
     }else{
