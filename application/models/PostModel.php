@@ -54,6 +54,7 @@ class PostModel extends CI_Model{
           s.shop_name_kh,
           s.shop_address,
           s.shop_status,
+          s.is_delivery,
           p.user_id,
           u.user_fullname,
           u.user_photo,
@@ -72,7 +73,7 @@ class PostModel extends CI_Model{
         FROM nham_user_post p
         LEFT JOIN nham_shop s ON p.shop_id = s.shop_id
         LEFT JOIN nham_user u ON p.user_id = u.user_id
-        WHERE p.post_status = 1 ";
+        WHERE p.post_status = 1 AND u.user_status = 1 ";
     
     
       
@@ -653,7 +654,7 @@ class PostModel extends CI_Model{
   function getDeviceNotification($request){
     $sql = "SELECT distinct ul.token_id, ul.os_type FROM nham_user_log ul WHERE ul.user_id in 
       (SELECT p.user_id from nham_user_post p where p.post_id = ?)
-      order by ul.created_date DESC limit 1";
+      order by ul.id DESC limit 1";
     
     $param["post_id"] = $request["post_id"];
     $query = $this->db->query($sql , $param);

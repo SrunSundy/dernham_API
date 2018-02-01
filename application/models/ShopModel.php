@@ -38,6 +38,7 @@ class ShopModel extends CI_Model{
 						sh.shop_opening_time,
 						sh.shop_close_time,
 						sh.shop_has_detail_img,
+                        sh.is_delivery,
                         (SELECT count(*) AS liked_cnt FROM nham_shop_like WHERE shop_id = sh.shop_id ) AS liked_cnt,
                         (SELECT count(*) AS is_saved FROM nham_saved_shop WHERE shop_id = sh.shop_id AND user_id = ?) AS is_saved,
                         (SELECT count(*) AS is_liked FROM nham_shop_like WHERE shop_id= sh.shop_id AND user_id = ? ) AS is_liked,
@@ -156,7 +157,9 @@ class ShopModel extends CI_Model{
 		    $sql .="\n LEFT JOIN nham_serve_cate_map_shop cate  ON cate.shop_id = sh.shop_id ";
 		}
 		
-		$sql .="\n WHERE sh.shop_status = 1 ";		
+		$sql .="  WHERE 1=1 ";
+		if(!isset($request["status"]))
+		  $sql .="\n AND sh.shop_status = 1 ";		
 		
 		$param = array();
 		array_push($param, $current_lat, $current_lng);
@@ -167,12 +170,15 @@ class ShopModel extends CI_Model{
 		}
 		
 		if(isset($request["sch_str"])){
-			$sql .= " AND REPLACE(CONCAT_WS(sh.shop_name_en,sh.shop_name_kh,sh.shop_serve_type,sh.shop_address),' ','') LIKE REPLACE(?,' ','') ";
+			$sql .= " AND REPLACE(CONCAT_WS(COALESCE(sh.shop_name_en,''),COALESCE(sh.shop_name_kh,''),COALESCE(sh.shop_serve_type,''),COALESCE(sh.shop_address,'')),' ','') LIKE REPLACE(?,' ','') ";
 			array_push($param, "%".$request["sch_str"]."%");
 		}
 	//	$sql .= " HAVING distance < ? ORDER BY distance ";
 	//	array_push($param, $nearby_value);
-	    $sql .= " ORDER BY distance ";
+		if(!isset($request["status"]))
+		    $sql .= " ORDER BY distance ";
+		else 
+		    $sql .= " ORDER BY sh.shop_status";
 		
 		$query_record = $this->db->query($sql , $param);
 		$total_record = count($query_record->result());
@@ -360,6 +366,7 @@ class ShopModel extends CI_Model{
 		$user_id = (isset($request["user_id"])) ? $request["user_id"] : 0;
 			
 		$sql = "SELECT 
+                    sh.shop_id,
 					sh.branch_id,
 					sh.shop_logo,
 					sh.shop_cover,
@@ -378,6 +385,7 @@ class ShopModel extends CI_Model{
 					sh.shop_view_count,
 					sh.shop_social_media,
 					sh.shop_time_zone,
+                    sh.is_delivery,
                     (SELECT count(*) AS liked_cnt FROM nham_shop_like WHERE shop_id = sh.shop_id ) AS liked_cnt,
                     (SELECT count(*) AS is_saved FROM nham_saved_shop WHERE shop_id = sh.shop_id AND user_id = ?) AS is_saved,
                     (SELECT count(*) AS is_liked FROM nham_shop_like WHERE shop_id= sh.shop_id AND user_id = ? ) AS is_liked,
@@ -446,6 +454,23 @@ class ShopModel extends CI_Model{
 		
 		return $response;
 		
+	}
+	
+	function insertTempShop($request){
+	    $sql = "INSERT INTO nham_shop(
+					shop_name_en,
+					shop_logo,
+					shop_status,
+                    shop_created_date
+				)VALUES(?,?,?,?)";
+	    $param["shop_name_en"] = $request["shop_name_en"];
+	    $param["shop_logo"] = $request["shop_logo"];	  
+	    $param["shop_status"] = $request["shop_status"];
+	    $current_time = new DateTime();
+	    $current_time = $current_time->format('Y-m-d H:i:s');
+	    $param["shop_created_date"] = $current_time;
+	    $query = $this->db->query($sql , $param);
+	    return ($this->db->affected_rows() != 1) ? false : true;
 	}
 	
 	function insertShop($request){
@@ -634,51 +659,50 @@ class ShopModel extends CI_Model{
 	    $query = $this->db->query($sql , $param);
 	    return $query;
 	}
+
 	function listEvent($request){	
-	$row = (int)$request["row"];
-	$page = (int)$request["page"];
+		$row = (int)$request["row"];
+		$page = (int)$request["page"];
+		
+		if(!$row) $row = 10;
+		if(!$page) $page = 1;
 	
-	if(!$row) $row = 10;
-	if(!$page) $page = 1;
-  
-	$limit = $row;
-	$offset = ($row*$page)-$row;
-   
-	
-	$param = array();
-	$sql = "SELECT 
-				ne.evt_id,
-				ne.shop_id,
-				ns.shop_name_en,
-				ns.shop_name_kh,
-				ns.shop_logo,
-				ne.evt_cntt,
-				ne.evt_img,
-				ne.created_date
+		$limit = $row;
+		$offset = ($row*$page)-$row;
+		
+		$param = array();
+		$sql = "SELECT ev.evt_id, ev.shop_id, ns.shop_name_en, ns.shop_name_kh, ns.shop_logo, ev.evt_cntt, ev.evt_img, ev.created_date
+					FROM nham_event ev
+					LEFT JOIN nham_shop ns ON ns.shop_id = ev.shop_id 
+					WHERE ev.evt_id = ? AND ev.status = 1
+				UNION
+				(SELECT ne.evt_id, ne.shop_id, ns.shop_name_en, ns.shop_name_kh, ns.shop_logo, ne.evt_cntt, ne.evt_img, ne.created_date
+					FROM nham_event ne
+					LEFT JOIN nham_shop ns ON ns.shop_id = ne.shop_id 
+					WHERE ne.evt_id <> ? AND ne.status = 1 ORDER BY ne.evt_id DESC)";
+
+		$event_id = (int)$request["event_id"];
+		if(!$event_id) $event_id = 0;
+		array_push($param, $event_id, $event_id);
 			
-			FROM nham_event ne
-			LEFT JOIN nham_shop ns ON ns.shop_id = ne.shop_id 
-			WHERE ne.status = 1 ";
-		   
-	$query_record = $this->db->query($sql , $param);
-	$total_record = count($query_record->result());
-	$total_page = $total_record / $row;
-	if( ($total_record % $row) > 0){
-		$total_page += 1;
+		$query_record = $this->db->query($sql , $param);
+		$total_record = count($query_record->result());
+		$total_page = $total_record / $row;
+		if( ($total_record % $row) > 0){
+			$total_page += 1;
+		}
+		
+		$response["total_record"] = $total_record;
+		$response["total_page"] = (int)$total_page;
+		
+		$sql .= " LIMIT ? OFFSET ?";
+		array_push($param , $limit, $offset);
+		
+		$query = $this->db->query($sql , $param);
+		$response["response_data"] = $query->result();
+		
+		return $response;
 	}
-	
-	$response["total_record"] = $total_record;
-	$response["total_page"] = (int)$total_page;
-	
-	$sql .= " ORDER BY ne.evt_id DESC
-			  LIMIT ? OFFSET ? ";
-	array_push($param , $limit, $offset);
-	
-	$query = $this->db->query($sql , $param);
-	$response["response_data"] = $query->result();
-	
-	return $response;
-}
 
 }
 
